@@ -38,6 +38,27 @@
 - [ ] Coordinate deployment with Person E
 - [ ] Handle any integration issues
 
+**Frontend API Client**
+- [ ] Create Axios client with interceptors
+- [ ] Implement farmAPI functions
+- [ ] Implement weatherAPI functions
+- [ ] Implement recommendationAPI functions
+- [ ] Implement alertAPI functions
+- [ ] Add error handling
+
+**Offline-First**
+- [ ] Create useOffline hook
+- [ ] Cache recommendations in localStorage
+- [ ] Cache weather data in localStorage
+- [ ] Show offline indicator in header
+- [ ] Sync on reconnect
+
+**Realtime**
+- [ ] Create useRealtime hook
+- [ ] Subscribe to recommendations table
+- [ ] Update dashboard on new recommendations
+- [ ] Show toast notifications
+
 **Presentation**
 - [ ] Prepare demo script
 - [ ] Lead the presentation
@@ -47,6 +68,8 @@
 - [ ] Working Golang API with all routes
 - [ ] JWT authentication system
 - [ ] Integration with all external services
+- [ ] Offline-first functionality
+- [ ] Realtime updates
 - [ ] Clean, documented code
 
 ---
@@ -78,15 +101,16 @@
 - [ ] Implement CreateSMSLog, GetSMSLogs
 
 **External API Clients**
-- [ ] Create kijanibox.go client
+- [ ] Define API contracts with Person D (request/response schemas, base URLs, credentials)
+- [ ] Create kijanibox.go wrapper (calls service owned by Person D)
 - [ ] GetWeatherForecast()
 - [ ] GetSoilMoisture()
 - [ ] Error handling and timeout
-- [ ] Create africastalking.go client
+- [ ] Create africastalking.go wrapper (calls service owned by Person D)
 - [ ] SendSMS() with phone formatting
 - [ ] Error handling
 - [ ] Retry logic
-- [ ] Create python_ai.go client
+- [ ] Create python_ai.go client (calls Person D's FastAPI service)
 - [ ] GetRecommendation()
 - [ ] Timeout handling
 - [ ] Response parsing
@@ -107,7 +131,6 @@
 **Testing**
 - [ ] Write unit tests for repositories
 - [ ] Test all API calls with Postman
-- [ ] Verify SMS sending
 - [ ] Test error scenarios
 
 ### Key Deliverables
@@ -174,27 +197,6 @@
 - [ ] Delete farm
 - [ ] /alerts - Alert history page
 
-**API Client**
-- [ ] Create Axios client with interceptors
-- [ ] Implement farmAPI functions
-- [ ] Implement weatherAPI functions
-- [ ] Implement recommendationAPI functions
-- [ ] Implement alertAPI functions
-- [ ] Add error handling
-
-**Offline-First**
-- [ ] Create useOffline hook
-- [ ] Cache recommendations in localStorage
-- [ ] Cache weather data in localStorage
-- [ ] Show offline indicator in header
-- [ ] Sync on reconnect
-
-**Realtime**
-- [ ] Create useRealtime hook
-- [ ] Subscribe to recommendations table
-- [ ] Update dashboard on new recommendations
-- [ ] Show toast notifications
-
 **Polish**
 - [ ] Mobile responsiveness check
 - [ ] Cross-browser testing
@@ -206,15 +208,13 @@
 - [ ] Beautiful, responsive web app
 - [ ] Working authentication flow
 - [ ] Full dashboard with all features
-- [ ] Offline-first functionality
-- [ ] Realtime updates
 - [ ] Polished presentation-ready UI
 
 ---
 
 ## PERSON D - AI & Integration Specialist
 
-**Role Description:** Builds the Python AI service, integrates KijaniBox, and sets up Africa's Talking. Focuses on the "brains" of the application.
+**Role Description:** Builds the Python AI service, integrates KijaniBox, and sets up Africa's Talking. Focuses on the "brains" of the application. Sole owner of all KijaniBox and Africa's Talking credentials, documentation, and live testing; Person B implements the Go wrappers against the clients and contracts defined here.
 
 ### Primary Responsibilities
 
@@ -349,6 +349,8 @@
   - [ ] Add Farm
   - [ ] Generate Recommendation
   - [ ] Send SMS
+- [ ] Test SMS templates in all languages (using Person D's sandbox)
+- [ ] Verify SMS delivery statuses and opt-out handling
 - [ ] Test offline mode
 - [ ] Test realtime updates
 - [ ] Test mobile responsiveness
