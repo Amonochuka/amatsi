@@ -5,15 +5,33 @@
  *
  * Wraps go-redis for two jobs: caching weather/soil API responses
  * (TTL 1h) and serving as the Asynq task-queue broker.
- *
- * WHAT NEEDS TO BE DONE:
- * - Implement NewRedisClient(url) using github.com/redis/go-redis/v9,
- *   parsing the REDIS_URL (Upstash style redis://default:pass@host:port).
- * - Verify connectivity with a Ping on startup (Feature 19.7).
- * - Provide Close() for graceful shutdown.
- * - Return the client so both handlers (cache) and internal/queue
- *   (Asynq broker) can reuse the same connection.
- *
- * Feature references: 19.7.
  * ============================================================================
  */
+
+package clients
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/redis/go-redis/v9"
+)
+
+// NewRedisClient creates a Redis client from an Upstash-style redis:// URL.
+// It verifies connectivity with a Ping before returning.
+func NewRedisClient(ctx context.Context, redisURL string) (*redis.Client, error) {
+	opts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
+	}
+
+	client := redis.NewClient(opts)
+
+	// Verify connectivity
+	if err := client.Ping(ctx).Err(); err != nil {
+		_ = client.Close()
+		return nil, fmt.Errorf("failed to ping Redis: %w", err)
+	}
+
+	return client, nil
+}

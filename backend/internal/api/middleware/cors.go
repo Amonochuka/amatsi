@@ -5,16 +5,36 @@
  *
  * Allows the Vercel-hosted Next.js frontend to call the Go API from the
  * browser (and handles preflight OPTIONS).
- *
- * WHAT NEEDS TO BE DONE:
- * - Configure CORS for the frontend origin(s). In dev allow localhost; in
- *   prod restrict to the deployed Vercel URL(s).
- * - Allow the methods + headers the frontend sends (Authorization for JWT,
- *   Content-Type, etc.).
- * - Expose any custom response headers the frontend reads.
- * - Keep credentials handling explicit and correct (auth is JWT, not
- *   cookies, so Accept-Credentials can stay off unless logout needs it).
- *
- * Feature references: 19.10.
  * ============================================================================
  */
+
+package middleware
+
+import (
+	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+)
+
+// CORSMiddleware returns a Gin middleware that configures CORS for the
+// provided frontend origin(s). In dev this includes localhost; in prod
+// it should be restricted to the deployed Vercel URL(s).
+func CORSMiddleware(allowedOrigins []string) gin.HandlerFunc {
+	config := cors.Config{
+		AllowOrigins: allowedOrigins,
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"Authorization",
+			"X-Requested-With",
+		},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		AllowCredentials: false, // JWT-based auth, not cookies
+		MaxAge:           12 * time.Hour,
+	}
+
+	return cors.New(config)
+}

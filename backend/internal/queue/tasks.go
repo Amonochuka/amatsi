@@ -4,17 +4,43 @@
  * Component: Person B + <Database / Repos / Clients / SMS logic>
  *
  * Defines the unit of work the queue transports: one queued SMS request.
- *
- * WHAT NEEDS TO BE DONE:
- * - Define the task type constant, e.g. const TypeSendSMS = "send:sms".
- * - Define SendSMSTask struct with payload needed by the worker:
- *   farmer_id, farm_id, recipients ([]string for Multi-Phone, Feature
- *   13.6), message text, language/template id (13.2–13.5), sms_log_id to
- *   update status on (Feature 13.8).
- * - Implement NewSendSMSTask(...) helper that marshals the payload so
- *   handlers can enqueue with asynq.NewTask(TypeSendSMS, payload).
- * - Keep payload JSON stable — the worker deserialises it.
- *
- * Feature references: 13.1, 13.2–13.5, 13.6, 13.8.
  * ============================================================================
  */
+
+package queue
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/hibiken/asynq"
+)
+
+// TypeSendSMS is the Asynq task type for sending SMS messages.
+const TypeSendSMS = "sms:send"
+
+// SendSMSPayload contains all data needed by the SMS worker to deliver a message.
+type SendSMSPayload struct {
+	FarmerID   string   `json:"farmer_id"`
+	FarmID     string   `json:"farm_id"`
+	Recipients []string `json:"recipients"`
+	Message    string   `json:"message"`
+	Language   string   `json:"language"`
+	SMSLogID   string   `json:"sms_log_id"`
+}
+
+// NewSendSMSTask creates an Asynq task for sending an SMS.
+// The task is configured with max 3 retries and placed in the "default" queue.
+func NewSendSMSTask(payload SendSMSPayload) (*asynq.Task, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal SMS task payload: %w", err)
+	}
+
+	return asynq.NewTask(
+		TypeSendSMS,
+		data,
+		asynq.MaxRetry(3),
+		asynq.Queue("default"),
+	), nil
+}
