@@ -362,6 +362,13 @@ Instead of using complex machine learning models that require extensive training
 
 The system does not overwhelm farmers with data. It provides a single, clear recommendation: IRRIGATE, WAIT, MONITOR, or CONSERVE. This simplicity is the product's strength.
 
+### 9.6 Business Model & Premium Tiers
+
+KijaniFarmer employs a **Freemium** business model to maximize impact while ensuring financial sustainability:
+
+- **Basic Tier (Free):** Designed for low-income smallholder farmers without smartphones. Includes the daily SMS-based advisory service, weather alerts, and manual watering recommendations.
+- **Premium Tier (Paid Subscription):** Designed for medium-to-commercial scale farmers with smartphones. Includes full access to the advanced web dashboard, water usage analytics, and **Smart IoT Hardware Integration**. Premium users can install IoT water valves that connect directly to the platform, allowing KijaniFarmer to automatically and physically trigger irrigation systems based on the AI's real-time recommendations, completely eliminating human intervention.
+
 ---
 
 ## 10. Impact Metrics
