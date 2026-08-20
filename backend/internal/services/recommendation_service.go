@@ -12,23 +12,32 @@ type RecommendationService struct {
 	recRepo     *repository.RecommendationRepository
 	weatherRepo *repository.WeatherRepository
 	farmRepo    *repository.FarmRepository
+	userRepo    *repository.UserRepository
 	kijani      *clients.KijaniboxClient
 	ai          *clients.PythonAIClient
+	mqtt        *clients.MQTTClient
+	alertSvc    *AlertService
 }
 
 func NewRecommendationService(
 	recRepo *repository.RecommendationRepository,
 	weatherRepo *repository.WeatherRepository,
 	farmRepo *repository.FarmRepository,
+	userRepo *repository.UserRepository,
 	kijani *clients.KijaniboxClient,
 	ai *clients.PythonAIClient,
+	mqtt *clients.MQTTClient,
+	alertSvc *AlertService,
 ) *RecommendationService {
 	return &RecommendationService{
 		recRepo:     recRepo,
 		weatherRepo: weatherRepo,
 		farmRepo:    farmRepo,
+		userRepo:    userRepo,
 		kijani:      kijani,
 		ai:          ai,
+		mqtt:        mqtt,
+		alertSvc:    alertSvc,
 	}
 }
 
@@ -80,6 +89,22 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 
 	if err := s.recRepo.CreateRecommendation(ctx, rec); err != nil {
 		return nil, err
+	}
+
+	if rec.Action == "IRRIGATE" {
+		user, err := s.userRepo.GetUserByID(ctx, farm.UserID)
+		if err == nil {
+			if user.IsPremium && farm.DeviceID != nil && *farm.DeviceID != "" {
+				// Premium user with IoT device -> Trigger Automated Valve via MQTT
+				// Calculate a mock duration based on TankCapacity or an AI metric (e.g., 45 minutes)
+				durationMinutes := 45.0
+				_ = s.mqtt.TriggerIrrigation(*farm.DeviceID, durationMinutes)
+			} else {
+				// Standard user -> Send SMS Alert
+				msg := "AMATSI Advisor: " + rec.Reason + " Action: " + rec.Action
+				_ = s.alertSvc.SendAlert(ctx, farmID, user.PhoneNumber, msg)
+			}
+		}
 	}
 
 	return rec, nil
