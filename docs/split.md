@@ -1,5 +1,7 @@
 # Team Role Split
 
+> **NOTE:** Don't forget deployment! The build only counts if it's live. Budget dedicated time to deploy the Go API, Python AI service, and frontend before the demo. See the deployment tasks in `to-do-list.md` (Phase 7).
+
 ## PERSON A - Team Lead / Backend Developer
 
 **Role Description:** Leads the team and builds the core Golang backend API. Responsible for all backend infrastructure and ensuring integration with other services.
