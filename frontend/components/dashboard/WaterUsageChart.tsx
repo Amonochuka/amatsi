@@ -1,3 +1,5 @@
+"use client";
+
 /*
  * ============================================================================
  * components/dashboard/WaterUsageChart.tsx — WATER USAGE BAR CHART
