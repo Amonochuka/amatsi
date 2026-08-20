@@ -152,7 +152,14 @@
 - [ ] RecommendationCard - main recommendation display
 - [ ] Show IRRIGATE/WAIT/MONITOR/CONSERVE
 - [ ] Display reason and water saved
-- [ ] "Send SMS" button
+- [ ] "Send SMS" button (shown only for free-tier users)
+
+**Premium IoT Subscription**
+- [ ] Add `is_premium` toggle to the signup form ("Enable Smart IoT Automated Watering")
+- [ ] Add `device_id` text input field on the Farm Registration/Edit form ("IoT Device ID e.g. ESP32-Kijani-001")
+- [ ] Only show the `device_id` field when `is_premium` is enabled
+- [ ] Submit `is_premium` and `device_id` in the API payload when creating/updating a farm
+- [ ] On the dashboard, show a premium badge and "Valve will auto-trigger" status instead of the SMS button for premium users
 
 **API Client**
 - [ ] Create Axios client with interceptors
@@ -182,6 +189,7 @@
 - [ ] Offline-first functionality
 - [ ] Realtime updates
 - [ ] Polished UI
+- [ ] Premium IoT subscription toggle and device ID form fields
 
 ---
 
