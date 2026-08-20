@@ -1,8 +1,8 @@
 # Team Role Split
 
-## PERSON A - Team Lead / Full-Stack Developer
+## PERSON A - Team Lead / Backend Developer
 
-**Role Description:** The glue that holds everything together. Responsible for project coordination, the core Golang backend, and ensuring all pieces integrate smoothly.
+**Role Description:** Leads the team and builds the core Golang backend API. Responsible for all backend infrastructure and ensuring integration with other services.
 
 ### Primary Responsibilities
 
@@ -13,6 +13,9 @@
 - [ ] Ensure all team members have required software installed
 - [ ] Create initial folder structure for all services
 - [ ] Document team rules and code standards
+- [ ] Manage code review process
+- [ ] Ensure timely completion of tasks
+- [ ] Run daily stand-up meetings
 
 **Golang Backend Core**
 - [ ] Set up main.go with Gin router
@@ -26,57 +29,35 @@
 
 **API Development**
 - [ ] Create route registration (routes.go)
-- [ ] Implement farm CRUD handlers
 - [ ] Implement auth handlers (login/signup)
+- [ ] Implement farm CRUD handlers
 - [ ] Create API client for Python AI service
 - [ ] Implement error handling and logging
 - [ ] Create response formatters (JSON)
 
-**Integration & Coordination**
+**Integration**
 - [ ] Ensure all services communicate correctly
 - [ ] Test end-to-end data flow
-- [ ] Coordinate deployment with Person E
 - [ ] Handle any integration issues
+- [ ] Resolve blocking issues
 
-**Frontend API Client**
-- [ ] Create Axios client with interceptors
-- [ ] Implement farmAPI functions
-- [ ] Implement weatherAPI functions
-- [ ] Implement recommendationAPI functions
-- [ ] Implement alertAPI functions
-- [ ] Add error handling
-
-**Offline-First**
-- [ ] Create useOffline hook
-- [ ] Cache recommendations in localStorage
-- [ ] Cache weather data in localStorage
-- [ ] Show offline indicator in header
-- [ ] Sync on reconnect
-
-**Realtime**
-- [ ] Create useRealtime hook
-- [ ] Subscribe to recommendations table
-- [ ] Update dashboard on new recommendations
-- [ ] Show toast notifications
-
-**Presentation**
-- [ ] Prepare demo script
-- [ ] Lead the presentation
-- [ ] Ensure all team members know their speaking parts
+**Code Quality**
+- [ ] Perform code reviews
+- [ ] Ensure consistent coding standards
+- [ ] Refactor where needed
 
 ### Key Deliverables
 - [ ] Working Golang API with all routes
 - [ ] JWT authentication system
-- [ ] Integration with all external services
-- [ ] Offline-first functionality
-- [ ] Realtime updates
+- [ ] Integration with Python AI service
 - [ ] Clean, documented code
+- [ ] Team coordination and project plan
 
 ---
 
-## PERSON B - Backend Developer
+## PERSON B - Backend & Database Developer
 
-**Role Description:** Focuses on the database layer, external API clients, and business logic. Works closely with Person A.
+**Role Description:** Focuses on the database layer, external API clients, business logic, and task queue.
 
 ### Primary Responsibilities
 
@@ -101,16 +82,15 @@
 - [ ] Implement CreateSMSLog, GetSMSLogs
 
 **External API Clients**
-- [ ] Define API contracts with Person D (request/response schemas, base URLs, credentials)
-- [ ] Create kijanibox.go wrapper (calls service owned by Person D)
+- [ ] Create kijanibox.go client
 - [ ] GetWeatherForecast()
 - [ ] GetSoilMoisture()
 - [ ] Error handling and timeout
-- [ ] Create africastalking.go wrapper (calls service owned by Person D)
+- [ ] Create africastalking.go client
 - [ ] SendSMS() with phone formatting
 - [ ] Error handling
 - [ ] Retry logic
-- [ ] Create python_ai.go client (calls Person D's FastAPI service)
+- [ ] Create python_ai.go client
 - [ ] GetRecommendation()
 - [ ] Timeout handling
 - [ ] Response parsing
@@ -128,13 +108,9 @@
 - [ ] Create farm_service.go
 - [ ] Implement water calculation logic
 
-**Testing**
-- [ ] Write unit tests for repositories
-- [ ] Test all API calls with Postman
-- [ ] Test error scenarios
-
 ### Key Deliverables
-- [ ] Fully functional Supabase database
+- [ ] Fully functional Supabase database with all tables
+- [ ] All RLS policies configured correctly
 - [ ] All external API integrations working
 - [ ] Asynq task queue for SMS
 - [ ] Clean, tested repository code
@@ -143,7 +119,7 @@
 
 ## PERSON C - Frontend Developer
 
-**Role Description:** Builds the user-facing Next.js application. Responsible for beautiful, responsive, and functional UI.
+**Role Description:** Builds the user-facing Next.js application. Responsible for the main UI, authentication, and core dashboard components.
 
 ### Primary Responsibilities
 
@@ -178,43 +154,49 @@
 - [ ] Implement responsive design
 - [ ] Add offline indicator
 
-**Dashboard Components**
+**Core Dashboard Components**
 - [ ] WeatherCard - temperature, rain probability
 - [ ] SoilMoistureCard - soil moisture percentage
 - [ ] TankLevelCard - water tank level with progress bar
 - [ ] RecommendationCard - main recommendation display
-- [ ] WaterUsageChart - Recharts bar chart
-- [ ] RecentAlerts - SMS history list
-- [ ] FarmMap - Leaflet map with farm location
+- [ ] Show IRRIGATE/WAIT/MONITOR/CONSERVE
+- [ ] Display reason and water saved
+- [ ] "Send SMS" button
 
-**Feature Pages**
-- [ ] /irrigation - Irrigation advisor page
-- [ ] /planner - Crop planner page
-- [ ] /farms - Farm management page
-- [ ] List farms
-- [ ] Add farm form
-- [ ] Edit farm form
-- [ ] Delete farm
-- [ ] /alerts - Alert history page
+**API Client**
+- [ ] Create Axios client with interceptors
+- [ ] Implement farmAPI functions
+- [ ] Implement weatherAPI functions
+- [ ] Implement recommendationAPI functions
+- [ ] Implement alertAPI functions
+- [ ] Add error handling
 
-**Polish**
-- [ ] Mobile responsiveness check
-- [ ] Cross-browser testing
-- [ ] Performance optimization
-- [ ] Add loading states
-- [ ] Add error boundaries
+**Offline-First**
+- [ ] Create useOffline hook
+- [ ] Cache recommendations in localStorage
+- [ ] Cache weather data in localStorage
+- [ ] Show offline indicator in header
+- [ ] Sync on reconnect
+
+**Realtime**
+- [ ] Create useRealtime hook
+- [ ] Subscribe to recommendations table
+- [ ] Update dashboard on new recommendations
+- [ ] Show toast notifications
 
 ### Key Deliverables
 - [ ] Beautiful, responsive web app
 - [ ] Working authentication flow
-- [ ] Full dashboard with all features
-- [ ] Polished presentation-ready UI
+- [ ] Core dashboard with main components
+- [ ] Offline-first functionality
+- [ ] Realtime updates
+- [ ] Polished UI
 
 ---
 
 ## PERSON D - AI & Integration Specialist
 
-**Role Description:** Builds the Python AI service, integrates KijaniBox, and sets up Africa's Talking. Focuses on the "brains" of the application. Sole owner of all KijaniBox and Africa's Talking credentials, documentation, and live testing; Person B implements the Go wrappers against the clients and contracts defined here.
+**Role Description:** Builds the Python AI service, integrates KijaniBox, and sets up Africa's Talking. Focuses on the "brains" of the application.
 
 ### Primary Responsibilities
 
@@ -284,103 +266,86 @@
 
 ---
 
-## PERSON E - DevOps & Quality Assurance
+## PERSON E - Frontend & Full-Stack Support
 
-**Role Description:** Ensures the application is deployed, secure, and working. Handles environment setup, Docker, and testing.
+**Role Description:** Builds additional frontend pages and supports the frontend developer with components and API integration.
 
 ### Primary Responsibilities
 
-**Environment Setup**
-- [ ] Create .env templates for all services
-- [ ] Set up local development environment
-- [ ] Install Docker Desktop
-- [ ] Create Dockerfiles:
-  - [ ] Golang Dockerfile
-  - [ ] Python Dockerfile
-  - [ ] Next.js Dockerfile
-- [ ] Create docker-compose.yml for local development
-- [ ] Test local build
+**Dashboard Feature Pages**
+- [ ] Create /dashboard/irrigation page
+- [ ] Generate recommendation button
+- [ ] Current recommendation display
+- [ ] Historical recommendations list
+- [ ] Create /dashboard/planner page
+- [ ] 30-day weather forecast
+- [ ] Crop recommendations based on forecast
+- [ ] Planting calendar
+- [ ] Create /dashboard/farms page
+- [ ] List all farms with cards
+- [ ] Add farm form (modal or page)
+- [ ] Edit farm form
+- [ ] Delete farm with confirmation
+- [ ] Create /dashboard/alerts page
+- [ ] List all SMS messages sent
+- [ ] Status indicators (delivered/failed/pending)
+- [ ] Search and filter
 
-**Deployment Setup**
-- [ ] Create Railway account
-- [ ] Create Vercel account
-- [ ] Set up Upstash Redis
-- [ ] Configure Supabase production
+**Additional Components**
+- [ ] RecentAlerts component for dashboard home
+- [ ] WaterUsageChart component with Recharts
+- [ ] FarmMap component with Leaflet
+- [ ] Loading states and skeletons
+- [ ] Error boundaries
 
-**Golang Deployment**
-- [ ] Push code to GitHub
-- [ ] Create Railway project
-- [ ] Connect GitHub repository
-- [ ] Set environment variables:
-  - [ ] SUPABASE_DB_URL
-  - [ ] KIJANIBOX_API_KEY
-  - [ ] KIJANIBOX_BASE_URL
-  - [ ] AFRICA_TALKING_API_KEY
-  - [ ] AFRICA_TALKING_USERNAME
-  - [ ] AFRICA_TALKING_SENDER_ID
-  - [ ] REDIS_URL
-  - [ ] AI_SERVICE_URL
-  - [ ] JWT_SECRET
-  - [ ] PORT
-- [ ] Deploy service
-- [ ] Test health endpoint
+**Farm Management Features**
+- [ ] Farm form with validation
+- [ ] Farm name
+- [ ] Location (map picker)
+- [ ] Area (hectares)
+- [ ] Crop type (dropdown)
+- [ ] Planting date (date picker)
+- [ ] Soil type (dropdown)
+- [ ] Irrigation method (dropdown)
+- [ ] Tank capacity (number input)
 
-**Python AI Deployment**
-- [ ] Add second service to Railway
-- [ ] Set environment variables
-- [ ] Deploy service
-- [ ] Test health endpoint
+**API Integration Support**
+- [ ] Help Person C with API client functions
+- [ ] Implement additional API calls as needed
+- [ ] Test API integration in frontend
 
-**Frontend Deployment**
-- [ ] Push code to GitHub
-- [ ] Import to Vercel
-- [ ] Set environment variables:
-  - [ ] NEXT_PUBLIC_SUPABASE_URL
-  - [ ] NEXT_PUBLIC_SUPABASE_ANON_KEY
-  - [ ] NEXT_PUBLIC_API_URL
-- [ ] Deploy service
-- [ ] Test application
+**UI Polish**
+- [ ] Mobile responsiveness check for all pages
+- [ ] Cross-browser testing (Chrome, Firefox, Safari)
+- [ ] Performance optimization
+- [ ] Add loading states
+- [ ] Add error boundaries
 
-**Testing & Quality Assurance**
-- [ ] Test all API endpoints
-- [ ] Test end-to-end flow:
-  - [ ] Signup
-  - [ ] Login
-  - [ ] Add Farm
-  - [ ] Generate Recommendation
-  - [ ] Send SMS
-- [ ] Test SMS templates in all languages (using Person D's sandbox)
-- [ ] Verify SMS delivery statuses and opt-out handling
-- [ ] Test offline mode
-- [ ] Test realtime updates
-- [ ] Test mobile responsiveness
-- [ ] Test cross-browser compatibility
-- [ ] Test error handling
-
-**Security Checks**
-- [ ] Ensure no hardcoded API keys
-- [ ] Check CORS configuration
-- [ ] Verify JWT authentication
-- [ ] Check RLS policies
-- [ ] Verify environment variables
-
-**Documentation**
-- [ ] Create README.md
-- [ ] Document API endpoints
-- [ ] Document environment variables
-- [ ] Create deployment guide
-- [ ] Document known issues
-
-**Presentation Support**
-- [ ] Prepare backup screenshots
-- [ ] Record demo video (if needed)
-- [ ] Test presentation environment
-- [ ] Set up offline demo fallback
-- [ ] Create QR code for live app
+**Frontend Support**
+- [ ] Help Person C with any frontend issues
+- [ ] Build additional UI components as needed
+- [ ] Ensure consistent styling across all pages
 
 ### Key Deliverables
-- [ ] All services deployed and live
-- [ ] Fully tested application
-- [ ] Complete documentation
-- [ ] Presentation materials
-- [ ] Backup demo plan
+- [ ] Complete feature pages (Irrigation, Planner, Farms, Alerts)
+- [ ] Farm management CRUD functionality
+- [ ] Water usage chart with analytics
+- [ ] Map integration with farm locations
+- [ ] Mobile-responsive all pages
+- [ ] Polished, consistent UI
+
+---
+
+## Dependencies Between Roles
+
+| Task | Who Does It | Who Depends On It |
+|---|---|---|
+| Supabase Database | Person B | Person A (needs DB for API), Person C (needs auth), Person D (needs data) |
+| Golang API Foundation | Person A | Person C (frontend calls API), Person D (Go calls Python) |
+| Python AI Service | Person D | Person A (Go calls Python) |
+| Go API Clients | Person B | Person A (uses clients), Person C (frontend API) |
+| Frontend API Client | Person C + E | Person A (backend) |
+| Dashboard Components | Person C | Person E (needs to build pages) |
+| Feature Pages | Person E | Person C (needs integration) |
+| SMS Sandbox & Templates | Person D | Person A/B (test SMS flow), Person E (verify delivery) |
+| Deployment & E2E Testing | Shared (A coordinates) | All roles (verify their work in production) |
