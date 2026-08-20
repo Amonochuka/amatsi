@@ -53,7 +53,7 @@ func NewAsynqServer(redisURL string) (*asynq.Server, error) {
 func ParseRedisURL(redisURL string) (asynq.RedisClientOpt, error) {
 	u, err := url.Parse(redisURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
+		return asynq.RedisClientOpt{}, fmt.Errorf("failed to parse Redis URL: %w", err)
 	}
 
 	addr := u.Host
