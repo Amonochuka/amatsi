@@ -1,8 +1,8 @@
 import React from "react";
-import WaterUsageChart from "../../../frontend/components/dashboard/WaterUsageChart";
-import RecentAlerts from "../../../frontend/components/dashboard/RecentAlerts";
-import FarmMap from "../../../frontend/components/dashboard/FarmMap";
-import { mockWaterUsage, mockAlerts } from "../../../frontend/lib/mock/data";
+import WaterUsageChart from "../../components/dashboard/WaterUsageChart";
+import RecentAlerts from "../../components/dashboard/RecentAlerts";
+import FarmMap from "../../components/dashboard/FarmMap";
+import { mockWaterUsage, mockAlerts } from "../../lib/mock/data";
 
 export default function DashboardPage() {
 	const usage = mockWaterUsage();
