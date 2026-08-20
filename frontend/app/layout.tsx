@@ -26,3 +26,14 @@
 // - Add <Providers> wrapper (supabase auth, i18n language context, toaster)
 // - Register service worker (public/sw.js) for offline caching
 // - Keep the Caveat + Inter font overrides to match the current UI
+
+import React from "react";
+import "./globals.css";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<html lang="en">
+			<body>{children}</body>
+		</html>
+	);
+}
