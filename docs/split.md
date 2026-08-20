@@ -8,17 +8,6 @@
 
 ### Primary Responsibilities
 
-**Project Management**
-- [ ] Set up GitHub repository with proper branch structure
-- [ ] Create project board (GitHub Projects or Trello)
-- [ ] Coordinate team communication (WhatsApp/Slack/Telegram)
-- [ ] Ensure all team members have required software installed
-- [ ] Create initial folder structure for all services
-- [ ] Document team rules and code standards
-- [ ] Manage code review process
-- [ ] Ensure timely completion of tasks
-- [ ] Run daily stand-up meetings
-
 **Golang Backend Core**
 - [ ] Set up main.go with Gin router
 - [ ] Implement configuration loader (config.go)
