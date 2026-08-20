@@ -1,0 +1,13 @@
+/*
+ * ============================================================================
+ * app/globals.css — GLOBAL STYLES
+ * Component: Person C + Person E
+ *
+ * Next.js App Router global stylesheet (keep or alias to styles/tailwind.css).
+ * WHAT NEEDS TO BE DONE:
+ * - @tailwind base/components/utilities OR @import styles/tailwind.css
+ * - Global resets, dark-mode variables (Feature 8.5), focus/contrast styles
+ *   for accessibility (Feature 14.7–14.9)
+ * Feature references: 8.5, 14.7–14.9.
+ * ============================================================================
+ */

@@ -1,0 +1,20 @@
+# ============================================================================
+# requirements.txt — PYTHON DEPENDENCIES FOR THE AI SERVICE
+# Component: Person D (AI & Integration Specialist)
+#
+# Declares the third-party packages needed to run the FastAPI AI service.
+#
+# WHAT NEEDS TO BE DONE:
+# - Add pinned versions (best practice) of:
+#   - fastapi                 — web framework (app/main.py, app/routes/predict.py)
+#   - uvicorn[standard]       — ASGI server to run the app
+#   - pydantic                — request/response models (app/models/)
+#   - requests or httpx       — HTTP calls to KijaniBox (app/services/kijanibox_client.py)
+#   - python-dotenv           — load .env (API keys, CORS origins, timeouts)
+#   - pytest                  — dev dependency for test/test_recommendation.py
+# - Install with: python -m pip install -r ai-service/requirements.txt
+# - TODO(Person D): pin exact versions already used by the backend, and add
+#   httpx OR requests — pick ONE client library for consistency.
+#
+# Feature references: whole AI service (Person D component)
+# ============================================================================
