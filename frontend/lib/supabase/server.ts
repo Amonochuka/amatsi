@@ -20,8 +20,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
  * Server client bound to the Next.js cookie store so RLS-authenticated
  * queries run as the signed-in farmer (Feature 19.11).
  */
-export const createServerSupabaseClient = () => {
-	const cookieStore = cookies();
+export const createServerSupabaseClient = async () => {
+	const cookieStore = await cookies();
 
 	return createServerClient(supabaseUrl, supabaseAnonKey, {
 		cookies: {

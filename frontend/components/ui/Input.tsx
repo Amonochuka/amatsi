@@ -18,6 +18,7 @@ import React from "react";
 type InputType =
 	| "text"
 	| "email"
+	| "phone"
 	| "tel"
 	| "password"
 	| "number"
