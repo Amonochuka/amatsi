@@ -1,25 +1,33 @@
-# ============================================================================
-# app/models/request.py — RECOMMENDATION REQUEST MODEL
-# Component: Person D (AI & Integration Specialist)
-#
-# Pydantic schema describing the inputs the prediction endpoint accepts from the
-# Go backend / frontend when a recommendation is requested for a farm.
-#
-# WHAT NEEDS TO BE DONE:
-# - Define Pydantic model `RecommendationRequest` with fields (all reasonable
-#   defaults so partial data still works):
-#   - soil_moisture: float (percent, 0-100)
-#   - rain_probability: float (percent, 0-100)
-#   - tank_level: float (liters)
-#   - crop_type: str (e.g. "maize", "beans", "tomatoes", "rice", default)
-#   - field_size: float (area in square meters; see utils/helpers.py conversions)
-#   - temperature: float (Celsius)
-#   - humidity: float (percent)
-#   - rainfall_expected: float (mm, optional override of rain_probability)
-#   - lat / lon: float (optional, used by KijaniBox client to fetch live data)
-# - Add Field(ge=0, le=100) validation on percentages; Ge(0) on volumes/sizes.
-# - TODO(Person D): keep field names aligned with the Go backend's JSON payload
-#   in docs feature 6.2 / README section 6.2.
-#
-# Feature references: 6.2, 4.x (recommendation request flow)
-# ============================================================================
+"""Schemas accepted by the irrigation recommendation service."""
+
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+Percentage = Annotated[float, Field(ge=0, le=100)]
+NonNegative = Annotated[float, Field(ge=0)]
+Positive = Annotated[float, Field(gt=0)]
+
+
+class RecommendationRequest(BaseModel):
+    """Environmental and farm data supplied by the Go API gateway.
+
+    ``tank_capacity_liters`` is retained as an input alias for the existing Go
+    client. The data model currently has no separate live tank-level field, so
+    it is used as the available-water value for the conservation rule.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True)
+
+    crop_type: str = Field(default="other", min_length=1, max_length=100)
+    soil_type: str = Field(default="unknown", min_length=1, max_length=100)
+    temperature: float = Field(default=25.0, ge=-50, le=70)
+    rainfall_probability: Percentage = 0.0
+    soil_moisture: Percentage = 50.0
+    tank_level: NonNegative = Field(default=1_000.0, alias="tank_capacity_liters")
+    field_size_square_m: Positive = Field(default=1_000.0)
+    # Optional farm coordinates; when supplied the route may enrich missing
+    # sensor values from the live KijaniBox land forecast.
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)

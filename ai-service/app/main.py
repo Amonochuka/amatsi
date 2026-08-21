@@ -1,22 +1,40 @@
-# ============================================================================
-# app/main.py — FASTAPI APPLICATION ENTRY POINT
-# Component: Person D (AI & Integration Specialist)
-#
-# Bootstraps the FastAPI app for the AI recommendation service: wires up CORS,
-# exposes the GET /health liveness probe, and mounts the prediction router that
-# serves farmer recommendations.
-#
-# WHAT NEEDS TO BE DONE:
-# - Instantiate FastAPI app (e.g. FastAPI(title="KijaniFarmer AI Service", version="0.1.0")).
-# - Add CORS middleware so the frontend (Next.js) and backend (Go) can call this
-#   service from their origins (read allowed origins from .env).
-# - Define GET /health returning {"status": "ok"} for Docker healthchecks
-#   (see Dockerfile / docker-compose.yml).
-# - Import and include the prediction router from app/routes/predict.py (prefix,
-#   e.g. "/api/v1" or as wired by the Go backend).
-# - Load environment variables via python-dotenv (.env at ai-service root).
-# - Root route (optional) that lists available endpoints for debugging.
-# - TODO(Person D): feature 19.7 — catch startup errors and log clearly.
-#
-# Feature references: 6.2 (rule engine), 19.7 (error handling), 19.9 (rate limiting/timeouts)
-# ============================================================================
+"""FastAPI entry point for the AMATSI recommendation service."""
+
+import logging
+import os
+
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.routes.predict import router as prediction_router
+
+
+load_dotenv()
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
+app = FastAPI(title="AMATSI AI Service", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+app.include_router(prediction_router)
+
+
+@app.get("/health", tags=["health"])
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/", tags=["health"])
+def root() -> dict[str, str]:
+    return {"service": "amatsi-ai", "docs": "/docs", "health": "/health"}

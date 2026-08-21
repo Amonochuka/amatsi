@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: amatsi-ai
+    runtime: docker
+    rootDir: ai-service
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:3000,https://amatsi.vercel.app
+      - key: LOG_LEVEL
+        value: INFO
+      - key: KIJANIBOX_BASE_URL
+        sync: false
+      - key: KIJANIBOX_API_KEY
+        sync: false
+      - key: KIJANIBOX_TIMEOUT_SECONDS
+        value: "10"
