@@ -2,8 +2,22 @@
 backend/.env
 backend/.env.*
 !backend/.env.example
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+frontend/node_modules/
 
 # Build output
 backend/bin/
 frontend/.next/
-frontend/node_modules/
+.next/
+out/
+build/
+
+# Misc
+.DS_Store
+*.log
+*.tsbuildinfo
