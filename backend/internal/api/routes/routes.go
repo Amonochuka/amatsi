@@ -14,7 +14,7 @@ func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client
 	{
 		auth.POST("/signup", handlers.SignupHandler)
 		auth.POST("/login", handlers.LoginHandler)
-		auth.POST("/logout", handlers.LogoutHandler)
+		auth.POST("/logout", middleware.JWTAuthMiddleware(cfg.JWTSecret), handlers.LogoutHandler)
 	}
 
 	api := router.Group("/api")

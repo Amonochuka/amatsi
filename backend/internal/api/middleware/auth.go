@@ -14,13 +14,23 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 )
 
-// ContextUserIDKey is the Gin context key used to store the authenticated user's ID.
-const ContextUserIDKey = "userID"
+const (
+	// ContextUserIDKey is the Gin context key used to store the authenticated user's ID.
+	ContextUserIDKey = "userID"
+	// ContextJWTIDKey identifies the token being used, so logout can revoke it.
+	ContextJWTIDKey = "jwtID"
+	// ContextJWTExpiryKey stores the authenticated token's expiry time.
+	ContextJWTExpiryKey = "jwtExpiry"
+
+	revokedTokenKeyPrefix = "auth:revoked:"
+)
 
 // JWTAuthMiddleware returns a Gin middleware that validates Bearer JWT tokens.
 // On success it places the user ID (from the "sub" claim) into the Gin context.
@@ -82,10 +92,85 @@ func JWTAuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
+		jwtID, ok := claims["jti"].(string)
+		if !ok || jwtID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token missing 'jti' claim"})
+			c.Abort()
+			return
+		}
+
+		expiresAtUnix, ok := claims["exp"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token missing expiry"})
+			c.Abort()
+			return
+		}
+		expiresAt := time.Unix(int64(expiresAtUnix), 0)
+
+		if redisClient, exists := c.Get("redis_client"); exists {
+			rdb, ok := redisClient.(*redis.Client)
+			if !ok {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "authentication service unavailable"})
+				c.Abort()
+				return
+			}
+
+			revoked, err := rdb.Exists(c.Request.Context(), revokedTokenKeyPrefix+jwtID).Result()
+			if err != nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "authentication service unavailable"})
+				c.Abort()
+				return
+			}
+			if revoked > 0 {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Token has been revoked"})
+				c.Abort()
+				return
+			}
+		}
+
 		// Set user ID in context for downstream handlers
 		c.Set(ContextUserIDKey, userID)
+		c.Set(ContextJWTIDKey, jwtID)
+		c.Set(ContextJWTExpiryKey, expiresAt)
 		c.Next()
 	}
+}
+
+// RevokeToken records a JWT ID in Redis until its normal expiration time.
+func RevokeToken(c *gin.Context) error {
+	jwtID, ok := c.Get(ContextJWTIDKey)
+	if !ok {
+		return fmt.Errorf("authenticated token ID is missing")
+	}
+	expiresAt, ok := c.Get(ContextJWTExpiryKey)
+	if !ok {
+		return fmt.Errorf("authenticated token expiry is missing")
+	}
+
+	id, ok := jwtID.(string)
+	if !ok || id == "" {
+		return fmt.Errorf("authenticated token ID is invalid")
+	}
+	expiry, ok := expiresAt.(time.Time)
+	if !ok {
+		return fmt.Errorf("authenticated token expiry is invalid")
+	}
+
+	ttl := time.Until(expiry)
+	if ttl <= 0 {
+		return fmt.Errorf("token is already expired")
+	}
+
+	redisClient, exists := c.Get("redis_client")
+	if !exists {
+		return fmt.Errorf("redis client is unavailable")
+	}
+	rdb, ok := redisClient.(*redis.Client)
+	if !ok {
+		return fmt.Errorf("redis client is invalid")
+	}
+
+	return rdb.Set(c.Request.Context(), revokedTokenKeyPrefix+id, "1", ttl).Err()
 }
 
 // GetUserIDFromContext retrieves the authenticated user's ID from the Gin context.

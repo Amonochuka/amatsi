@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kijanifarmer/backend/internal/api/middleware"
 	"github.com/kijanifarmer/backend/internal/models"
 	"github.com/kijanifarmer/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -112,7 +113,12 @@ func LoginHandler(c *gin.Context) {
 }
 
 func LogoutHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	if err := middleware.RevokeToken(c); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "logout service unavailable"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "logged_out"})
 }
 
 func issueJWT(c *gin.Context, userID string) (string, error) {
@@ -120,6 +126,7 @@ func issueJWT(c *gin.Context, userID string) (string, error) {
 	ttl := c.MustGet("jwt_ttl").(time.Duration)
 	claims := jwt.MapClaims{
 		"sub": userID,
+		"jti": uuid.NewString(),
 		"exp": time.Now().Add(ttl).Unix(),
 		"iat": time.Now().Unix(),
 	}
