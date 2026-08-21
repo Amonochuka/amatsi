@@ -19,3 +19,17 @@
  * ============================================================================
  */
 package routes
+
+import (
+	"github.com/kijanifarmer/backend/internal/api/handlers"
+	"github.com/kijanifarmer/backend/internal/config"
+)
+
+func RegisterAuthRoutes(router *gin.Engine, cfg *config.AppConfig) {
+	auth := router.Group("/api/auth")
+	{
+		auth.POST("/signup", handlers.SignupHandler)
+		auth.POST("/login", handlers.LoginHandler)
+		auth.POST("/logout", handlers.LogoutHandler)
+	}
+}

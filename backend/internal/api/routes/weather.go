@@ -18,3 +18,18 @@
  * ============================================================================
  */
 package routes
+
+import (
+	"github.com/kijanifarmer/backend/internal/api/handlers"
+	"github.com/kijanifarmer/backend/internal/api/middleware"
+	"github.com/kijanifarmer/backend/internal/config"
+)
+
+func RegisterWeatherRoutes(router *gin.Engine, cfg *config.AppConfig) {
+	env := router.Group("/api")
+	env.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))
+	{
+		env.GET("/weather/:farmId", handlers.GetWeatherHandler)
+		env.GET("/soil/:farmId", handlers.GetSoilMoistureHandler)
+	}
+}
