@@ -52,3 +52,34 @@ func (r *RecommendationRepository) GetLatestRecommendation(ctx context.Context, 
 	}
 	return rec, nil
 }
+
+func (r *RecommendationRepository) GetRecommendationsByFarm(ctx context.Context, farmID string) ([]*models.Recommendation, error) {
+	query := `
+		SELECT id, farm_id, action, reason, water_saved_estimate, created_at
+		FROM recommendations
+		WHERE farm_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.Query(ctx, query, farmID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recs []*models.Recommendation
+	for rows.Next() {
+		rec := &models.Recommendation{}
+		if err := rows.Scan(
+			&rec.ID,
+			&rec.FarmID,
+			&rec.Action,
+			&rec.Reason,
+			&rec.WaterSavedEstimate,
+			&rec.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		recs = append(recs, rec)
+	}
+	return recs, nil
+}

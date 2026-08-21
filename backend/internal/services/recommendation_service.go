@@ -94,9 +94,7 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 	if rec.Action == "IRRIGATE" {
 		user, err := s.userRepo.GetUserByID(ctx, farm.UserID)
 		if err == nil {
-			if user.IsPremium && farm.DeviceID != nil && *farm.DeviceID != "" {
-				// Premium user with IoT device -> Trigger Automated Valve via MQTT
-				// Calculate a mock duration based on TankCapacity or an AI metric (e.g., 45 minutes)
+			if user.IsPremium && farm.DeviceID != nil && *farm.DeviceID != "" && s.mqtt != nil {
 				durationMinutes := 45.0
 				_ = s.mqtt.TriggerIrrigation(*farm.DeviceID, durationMinutes)
 			} else {

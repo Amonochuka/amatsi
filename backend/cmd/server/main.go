@@ -2,11 +2,6 @@
  * ============================================================================
  * cmd/server/main.go — API SERVER ENTRYPOINT
  * Component: Person A + <Go API / Team Lead>
- *
- * The Gin HTTP server entrypoint. Bootstraps every dependency (config,
- * database pool, Redis, clients, task queue, routes) and starts the API.
- *
- * Feature references: 19.7, 19.9, 19.10, 19.12, 13.1.
  * ============================================================================
  */
 
@@ -24,11 +19,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/kijanifarmer/backend/internal/api/middleware"
+	"github.com/kijanifarmer/backend/internal/api/routes"
 	"github.com/kijanifarmer/backend/internal/clients"
 	"github.com/kijanifarmer/backend/internal/config"
 	"github.com/kijanifarmer/backend/internal/queue"
+	"github.com/kijanifarmer/backend/internal/queue/workers"
+	"github.com/kijanifarmer/backend/internal/repository"
 )
 
 func main() {
@@ -37,7 +37,6 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	// ── 1. Load configuration ────────────────────────────────────────────
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("Failed to load configuration", slog.String("error", err.Error()))
@@ -45,14 +44,12 @@ func main() {
 	}
 	slog.Info("Configuration loaded", slog.String("port", cfg.Port))
 
-	// ── 2. Set Gin mode ──────────────────────────────────────────────────
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	ctx := context.Background()
 
-	// ── 3. Database connection pool ──────────────────────────────────────
 	dbPool, err := clients.NewSupabasePool(ctx, cfg.SupabaseDBURL)
 	if err != nil {
 		slog.Error("Failed to connect to database", slog.String("error", err.Error()))
@@ -61,7 +58,6 @@ func main() {
 	defer dbPool.Close()
 	slog.Info("Database connected")
 
-	// ── 4. Redis client ──────────────────────────────────────────────────
 	redisClient, err := clients.NewRedisClient(ctx, cfg.RedisURL)
 	if err != nil {
 		slog.Error("Failed to connect to Redis", slog.String("error", err.Error()))
@@ -70,7 +66,6 @@ func main() {
 	defer redisClient.Close()
 	slog.Info("Redis connected")
 
-	// ── 5. Asynq client (for enqueuing tasks) ────────────────────────────
 	asynqClient, err := queue.NewAsynqClient(cfg.RedisURL)
 	if err != nil {
 		slog.Error("Failed to create Asynq client", slog.String("error", err.Error()))
@@ -79,7 +74,6 @@ func main() {
 	defer asynqClient.Close()
 	slog.Info("Asynq client initialized")
 
-	// ── 6. Asynq server (for processing tasks) ──────────────────────────
 	var asynqServer *asynq.Server
 	asynqServer, err = queue.NewAsynqServer(cfg.RedisURL)
 	if err != nil {
@@ -89,17 +83,22 @@ func main() {
 		slog.Info("Asynq server initialized")
 	}
 
-	// ── 7. Create Gin router ─────────────────────────────────────────────
-	router := gin.New()
+	var mqttClient *clients.MQTTClient
+	if broker := os.Getenv("MQTT_BROKER_URL"); broker != "" {
+		mqttClient, err = clients.NewMQTTClient(broker, "amatsi-api")
+		if err != nil {
+			slog.Warn("MQTT unavailable", slog.String("error", err.Error()))
+			mqttClient = nil
+		}
+	}
 
-	// ── 8. Register middleware ───────────────────────────────────────────
+	router := gin.New()
 	router.Use(middleware.RequestLogger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
+	router.Use(injectDeps(dbPool, redisClient, asynqClient, mqttClient, cfg))
 
-	// ── 9. Health check endpoint (no auth required) ──────────────────────
 	router.GET("/health", func(c *gin.Context) {
-		// Ping the database to verify liveness
 		if err := dbPool.Ping(c.Request.Context()); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
 				"status": "unhealthy",
@@ -114,34 +113,13 @@ func main() {
 		})
 	})
 
-	// ── 10. Protected route group ────────────────────────────────────────
-	api := router.Group("/api")
-	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))
-	{
-		// Route registration will be added here by routes.go
-		// Example:
-		//   routes.RegisterFarmRoutes(api, farmHandler)
-		//   routes.RegisterWeatherRoutes(api, weatherHandler)
-		//   routes.RegisterRecommendationRoutes(api, recHandler)
-		//   routes.RegisterAlertRoutes(api, alertHandler)
-	}
+	routes.RegisterRoutes(router, cfg, redisClient)
 
-	// Public auth routes (no JWT required)
-	// auth := router.Group("/api/auth")
-	// {
-	//     routes.RegisterAuthRoutes(auth, authHandler)
-	// }
-
-	// Make dependencies available to handlers via context if needed
-	_ = dbPool      // Used by repositories
-	_ = redisClient // Used by cache layer
-	_ = asynqClient // Used by SMS enqueue
-
-	// ── 11. Start Asynq worker in background ─────────────────────────────
 	if asynqServer != nil {
+		atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
+		smsProcessor := workers.NewSMSProcessor(atClient, repository.NewAlertRepository(dbPool))
 		mux := asynq.NewServeMux()
-		// SMS worker handler will be registered here:
-		// mux.HandleFunc(queue.TypeSendSMS, workers.HandleSendSMSTask)
+		mux.HandleFunc(queue.TypeSendSMS, smsProcessor.ProcessTask)
 
 		go func() {
 			slog.Info("Asynq worker starting")
@@ -151,7 +129,6 @@ func main() {
 		}()
 	}
 
-	// ── 12. Create HTTP server ───────────────────────────────────────────
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      router,
@@ -160,7 +137,6 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// ── 13. Start server in goroutine ────────────────────────────────────
 	go func() {
 		slog.Info("Server starting", slog.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -169,26 +145,42 @@ func main() {
 		}
 	}()
 
-	// ── 14. Graceful shutdown ────────────────────────────────────────────
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
 	slog.Info("Shutdown signal received", slog.String("signal", sig.String()))
 
-	// Create timeout context for shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Shutdown HTTP server
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("Server shutdown error", slog.String("error", err.Error()))
 	}
-
-	// Shutdown Asynq server
 	if asynqServer != nil {
 		asynqServer.Shutdown()
 	}
-
-	// DB pool and Redis client are deferred above
 	slog.Info("Server shutdown complete")
+}
+
+func injectDeps(
+	db *pgxpool.Pool,
+	rdb *redis.Client,
+	asynqClient *asynq.Client,
+	mqttClient *clients.MQTTClient,
+	cfg *config.AppConfig,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("db_pool", db)
+		c.Set("redis_client", rdb)
+		c.Set("asynq_client", asynqClient)
+		c.Set("jwt_secret", cfg.JWTSecret)
+		c.Set("jwt_ttl", cfg.JWTTokenTTL)
+		c.Set("kijanibox_base_url", cfg.KijaniBoxBaseURL)
+		c.Set("kijanibox_api_key", cfg.KijaniBoxAPIKey)
+		c.Set("ai_service_url", cfg.AIServiceURL)
+		if mqttClient != nil {
+			c.Set("mqtt_client", mqttClient)
+		}
+		c.Next()
+	}
 }
