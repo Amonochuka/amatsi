@@ -11,8 +11,10 @@
 package queue
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/hibiken/asynq"
@@ -48,12 +50,19 @@ func NewAsynqServer(redisURL string) (*asynq.Server, error) {
 	return server, nil
 }
 
-// ParseRedisURL converts a redis:// URL string into an asynq.RedisClientOpt.
-// Supports standard Upstash-style URLs: redis://default:password@host:port
+// ParseRedisURL converts redis:// and rediss:// URLs into an Asynq connection
+// option. rediss:// enables TLS, which is required by hosted Redis providers
+// such as Upstash.
 func ParseRedisURL(redisURL string) (asynq.RedisClientOpt, error) {
 	u, err := url.Parse(redisURL)
 	if err != nil {
 		return asynq.RedisClientOpt{}, fmt.Errorf("failed to parse Redis URL: %w", err)
+	}
+	if u.Scheme != "redis" && u.Scheme != "rediss" {
+		return asynq.RedisClientOpt{}, fmt.Errorf("unsupported Redis URL scheme: %q", u.Scheme)
+	}
+	if u.Hostname() == "" {
+		return asynq.RedisClientOpt{}, fmt.Errorf("Redis URL must include a host")
 	}
 
 	addr := u.Host
@@ -61,27 +70,34 @@ func ParseRedisURL(redisURL string) (asynq.RedisClientOpt, error) {
 		addr = addr + ":6379"
 	}
 
+	username := ""
 	password := ""
 	if u.User != nil {
+		username = u.User.Username()
 		password, _ = u.User.Password()
 	}
 
-	// Default to DB 0
 	db := 0
-
-	useTLS := u.Scheme == "rediss"
+	if path := strings.TrimPrefix(u.EscapedPath(), "/"); path != "" {
+		parsedDB, err := strconv.Atoi(path)
+		if err != nil || parsedDB < 0 {
+			return asynq.RedisClientOpt{}, fmt.Errorf("invalid Redis database in URL: %q", u.Path)
+		}
+		db = parsedDB
+	}
 
 	opt := asynq.RedisClientOpt{
 		Addr:     addr,
+		Username: username,
 		Password: password,
 		DB:       db,
 	}
 
-	if useTLS {
-		// For Upstash TLS connections
-		_ = useTLS // asynq.RedisClientOpt doesn't have a TLS field directly;
-		// for TLS support with Upstash, use asynq.RedisConnOpt interface
-		// with a custom redis connection. For now this works with non-TLS.
+	if u.Scheme == "rediss" {
+		opt.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: u.Hostname(),
+		}
 	}
 
 	return opt, nil

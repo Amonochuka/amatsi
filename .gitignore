@@ -1,0 +1,9 @@
+# Local secrets
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Build output
+backend/bin/
+frontend/.next/
+frontend/node_modules/
