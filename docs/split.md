@@ -213,61 +213,61 @@
 ### Primary Responsibilities
 
 **Python AI Service**
-- [ ] Set up FastAPI application
-- [ ] Create folder structure
-- [ ] Install dependencies (requirements.txt)
-- [ ] Create main.py with FastAPI
-- [ ] Add CORS middleware
-- [ ] Implement health check endpoint
+- [x] Set up FastAPI application
+- [x] Create folder structure
+- [x] Install dependencies (requirements.txt)
+- [x] Create main.py with FastAPI
+- [x] Add CORS middleware
+- [x] Implement health check endpoint
 
 **Rule Engine**
-- [ ] Create recommendation.py service
-- [ ] Define crop water requirements dictionary
-- [ ] Implement calculate_water_needed() function
-- [ ] Implement rule-based recommendation logic:
-  - [ ] Rule 1: If rain > 60%, WAIT
-  - [ ] Rule 2: If soil < 30%, IRRIGATE
-  - [ ] Rule 3: If soil 30-60%, MONITOR
-  - [ ] Rule 4: If tank < 500L, CONSERVE
-  - [ ] Rule 5: If soil > 80%, MONITOR
-- [ ] Implement water_saved_estimate calculation
-- [ ] Add logging
+- [x] Create recommendation.py service
+- [x] Define crop water requirements dictionary
+- [x] Implement calculate_water_needed() function
+- [x] Implement rule-based recommendation logic:
+  - [x] Rule 1: If rain > 60%, WAIT
+  - [x] Rule 2: If soil < 30%, IRRIGATE
+  - [x] Rule 3: If soil 30-60%, MONITOR
+  - [x] Rule 4: If tank < 500L, CONSERVE
+  - [x] Rule 5: If soil > 80%, MONITOR
+- [x] Implement water_saved_estimate calculation
+- [x] Add logging
 
 **KijaniBox Integration**
 - [ ] Get KijaniBox API key
 - [ ] Review API documentation
-- [ ] Create kijanibox_client.py
-- [ ] Implement get_weather(lat, lon)
-- [ ] Implement get_soil_moisture(lat, lon)
-- [ ] Implement get_rainfall_probability(lat, lon)
-- [ ] Add error handling
-- [ ] Add timeout
+- [x] Create kijanibox_client.py (`app/clients/kijanibox_client.py`)
+- [x] Implement get_weather(lat, lon)
+- [x] Implement get_soil_moisture(lat, lon)
+- [x] Implement get_rainfall_probability(lat, lon)
+- [x] Add error handling
+- [x] Add timeout
 - [ ] Test with live API
 
 **API Endpoints**
-- [ ] Create /predict POST endpoint
-- [ ] Define request/response models (Pydantic)
-- [ ] Connect to rule engine
-- [ ] Connect to KijaniBox client
-- [ ] Add error handling
+- [x] Create /predict POST endpoint
+- [x] Define request/response models (Pydantic)
+- [x] Connect to rule engine
+- [x] Connect to KijaniBox client *(optional lat/lon enrichment via `app/services/enrichment.py`)*
+- [x] Add error handling
 
 **Africa's Talking Integration**
 - [ ] Get Africa's Talking API key
 - [ ] Review API documentation
-- [ ] Create SMS template:
-  - [ ] English version
-  - [ ] Kiswahili version
-  - [ ] Luo version
+- [x] Create SMS template (`app/services/sms.py`):
+  - [x] English version
+  - [x] Kiswahili version
+  - [x] Luo version
 - [ ] Test SMS sending
-- [ ] Create message formatting function
+- [x] Create message formatting function
 - [ ] Test with sandbox numbers
 
 **Testing**
-- [ ] Write unit tests for rule engine
+- [x] Write unit tests for rule engine
 - [ ] Test all API endpoints with Postman
 - [ ] Test KijaniBox integration
 - [ ] Test Africa's Talking integration
-- [ ] Create mock data for offline testing
+- [x] Create mock data for offline testing (`app/clients/mock_data.py`)
 
 ### Key Deliverables
 - [ ] Working Python AI service
