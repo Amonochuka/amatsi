@@ -33,52 +33,64 @@ type SoilData struct {
 	MoistureLevel float64 `json:"moisture_level"`
 }
 
-func (c *KijaniboxClient) GetWeatherForecast(ctx context.Context, lat, lon float64) (*WeatherData, error) {
-	url := fmt.Sprintf("%s/weather?lat=%f&lon=%f", c.BaseURL, lat, lon)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+type agroClimateLandResponse struct {
+	ForecastData struct {
+		Time                     []string  `json:"time"`
+		Temperature              []float64 `json:"temperature"`
+		PrecipitationProbability []float64 `json:"precipitation_probability"`
+		SoilMoisture0To10CM      []float64 `json:"soilmoisture_0to10cm"`
+	} `json:"forecast_data"`
+}
+
+// GetLandForecast retrieves the combined weather and soil forecast from the
+// verified SpaceIoTBox land endpoint. The endpoint's first hourly entry is
+// used as the current forecast for a farm.
+func (c *KijaniboxClient) GetLandForecast(ctx context.Context, lat, lon float64) (*WeatherData, *SoilData, error) {
+	url := fmt.Sprintf("%s/v1/agro_climate/land?lat=%f&lon=%f", c.BaseURL, lat, lon)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get weather: status %d", resp.StatusCode)
+		return nil, nil, fmt.Errorf("failed to get land forecast: status %d", resp.StatusCode)
 	}
 
-	var data WeatherData
+	var data agroClimateLandResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &data, nil
+
+	forecast := data.ForecastData
+	if len(forecast.Time) == 0 ||
+		len(forecast.Temperature) == 0 ||
+		len(forecast.PrecipitationProbability) == 0 ||
+		len(forecast.SoilMoisture0To10CM) == 0 {
+		return nil, nil, fmt.Errorf("land forecast response is missing required values")
+	}
+
+	return &WeatherData{
+			Temperature:         forecast.Temperature[0],
+			RainfallProbability: forecast.PrecipitationProbability[0],
+		}, &SoilData{
+			MoistureLevel: forecast.SoilMoisture0To10CM[0],
+		}, nil
+}
+
+func (c *KijaniboxClient) GetWeatherForecast(ctx context.Context, lat, lon float64) (*WeatherData, error) {
+	weather, _, err := c.GetLandForecast(ctx, lat, lon)
+	return weather, err
 }
 
 func (c *KijaniboxClient) GetSoilMoisture(ctx context.Context, lat, lon float64) (*SoilData, error) {
-	url := fmt.Sprintf("%s/soil?lat=%f&lon=%f", c.BaseURL, lat, lon)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get soil moisture: status %d", resp.StatusCode)
-	}
-
-	var data SoilData
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
-	}
-	return &data, nil
+	_, soil, err := c.GetLandForecast(ctx, lat, lon)
+	return soil, err
 }

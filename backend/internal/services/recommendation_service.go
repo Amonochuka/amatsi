@@ -47,12 +47,7 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 		return nil, err
 	}
 
-	weatherData, err := s.kijani.GetWeatherForecast(ctx, farm.Latitude, farm.Longitude)
-	if err != nil {
-		return nil, err
-	}
-
-	soilData, err := s.kijani.GetSoilMoisture(ctx, farm.Latitude, farm.Longitude)
+	weatherData, soilData, err := s.kijani.GetLandForecast(ctx, farm.Latitude, farm.Longitude)
 	if err != nil {
 		return nil, err
 	}
