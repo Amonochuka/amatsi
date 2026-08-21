@@ -1,69 +1,120 @@
+/*
+ * ============================================================================
+ * internal/config/config.go — ENVIRONMENT CONFIG LOADER
+ * Component: Person A + <Go API / Team Lead>
+ *
+ * Single source of truth for all environment variables. Every package reads
+ * configuration fields from this struct instead of touching os.Getenv.
+ * ============================================================================
+ */
+
 package config
 
 import (
 	"fmt"
 	"os"
+	"strings"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
-// Config holds all configuration values loaded from environment variables.
-type Config struct {
-	// Database
-	DatabaseURL string
-
-	// Redis
-	RedisAddr string
-
+// AppConfig holds all environment configuration for the application.
+// Every package reads from this struct instead of calling os.Getenv directly.
+type AppConfig struct {
 	// Server
-	Port      string
-	JWTSecret string
+	Port string
 
-	// External API Keys
-	KijaniboxAPIKey      string
-	KijaniboxBaseURL     string
-	AfricasTalkingAPIKey string
-	AfricasTalkingFrom   string
-	PythonAIBaseURL      string
+	// Supabase / PostgreSQL
+	SupabaseDBURL string
 
-	// MQTT
-	MQTTBrokerURI string
+	// JWT Authentication
+	JWTSecret        string
+	JWTTokenTTL      time.Duration
+	JWTSigningMethod string
+
+	// KijaniBox API
+	KijaniBoxAPIKey  string
+	KijaniBoxBaseURL string
+
+	// Africa's Talking SMS
+	AfricaTalkingAPIKey      string
+	AfricaTalkingUsername    string
+	AfricaTalkingSenderID    string
+	AfricaTalkingCallbackURL string
+
+	// Redis / Upstash
+	RedisURL string
+
+	// Python AI Service
+	AIServiceURL string
+
+	// CORS
+	AllowedOrigins []string
 }
 
-// Load reads configuration from environment variables and returns a Config.
-// It returns an error if any required variable is missing.
-func Load() (*Config, error) {
-	cfg := &Config{
-		DatabaseURL:          os.Getenv("DATABASE_URL"),
-		RedisAddr:            getEnvOrDefault("REDIS_ADDR", "localhost:6379"),
-		Port:                 getEnvOrDefault("PORT", "8080"),
-		JWTSecret:            os.Getenv("JWT_SECRET"),
-		KijaniboxAPIKey:      os.Getenv("KIJANIBOX_API_KEY"),
-		KijaniboxBaseURL:     getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanibox.com"),
-		AfricasTalkingAPIKey: os.Getenv("AFRICAS_TALKING_API_KEY"),
-		AfricasTalkingFrom:   getEnvOrDefault("AFRICAS_TALKING_FROM", "AMATSI"),
-		PythonAIBaseURL:      getEnvOrDefault("PYTHON_AI_BASE_URL", "http://localhost:8000"),
-		MQTTBrokerURI:        getEnvOrDefault("MQTT_BROKER_URI", "tcp://localhost:1883"),
+// Load reads environment variables from .env (if present) and os.Getenv,
+// applies defaults for optional fields, and returns an error listing all
+// missing required variables so startup fails loudly.
+func Load() (*AppConfig, error) {
+	// Load .env file if it exists; ignore error if not found
+	_ = godotenv.Load()
+
+	cfg := &AppConfig{
+		// Defaults
+		Port:                     getEnvOrDefault("PORT", "8080"),
+		JWTTokenTTL:              24 * time.Hour,
+		JWTSigningMethod:         "HS256",
+		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanibox.com"),
+		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
+		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
+
+		// Required (loaded below)
+		SupabaseDBURL:         os.Getenv("SUPABASE_DB_URL"),
+		JWTSecret:             os.Getenv("JWT_SECRET"),
+		KijaniBoxAPIKey:       os.Getenv("KIJANIBOX_API_KEY"),
+		AfricaTalkingAPIKey:   os.Getenv("AFRICA_TALKING_API_KEY"),
+		AfricaTalkingUsername: os.Getenv("AFRICA_TALKING_USERNAME"),
+		RedisURL:              os.Getenv("REDIS_URL"),
+		AIServiceURL:          os.Getenv("AI_SERVICE_URL"),
+	}
+
+	// Parse allowed origins (comma-separated)
+	originsStr := getEnvOrDefault("ALLOWED_ORIGINS", "http://localhost:3000")
+	cfg.AllowedOrigins = strings.Split(originsStr, ",")
+	for i := range cfg.AllowedOrigins {
+		cfg.AllowedOrigins[i] = strings.TrimSpace(cfg.AllowedOrigins[i])
 	}
 
 	// Validate required fields
-	if cfg.DatabaseURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
+	var missing []string
+	requiredFields := map[string]string{
+		"SUPABASE_DB_URL":         cfg.SupabaseDBURL,
+		"JWT_SECRET":              cfg.JWTSecret,
+		"KIJANIBOX_API_KEY":       cfg.KijaniBoxAPIKey,
+		"AFRICA_TALKING_API_KEY":  cfg.AfricaTalkingAPIKey,
+		"AFRICA_TALKING_USERNAME": cfg.AfricaTalkingUsername,
+		"REDIS_URL":               cfg.RedisURL,
+		"AI_SERVICE_URL":          cfg.AIServiceURL,
 	}
-	if cfg.JWTSecret == "" {
-		return nil, fmt.Errorf("JWT_SECRET environment variable is required")
+	for name, value := range requiredFields {
+		if value == "" {
+			missing = append(missing, name)
+		}
 	}
-	if cfg.KijaniboxAPIKey == "" {
-		return nil, fmt.Errorf("KIJANIBOX_API_KEY environment variable is required")
-	}
-	if cfg.AfricasTalkingAPIKey == "" {
-		return nil, fmt.Errorf("AFRICAS_TALKING_API_KEY environment variable is required")
+
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
 	}
 
 	return cfg, nil
 }
 
-func getEnvOrDefault(key, defaultVal string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
+// getEnvOrDefault returns the value of the environment variable named by key,
+// or the provided default if the variable is empty or unset.
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-	return defaultVal
+	return defaultValue
 }
