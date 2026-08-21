@@ -12,17 +12,26 @@
  */
 
 import React from "react";
+import Navbar from "../components/ui/Navbar";
+import Footer from "../components/ui/Footer";
+import HeroSection from "../components/landing/HeroSection";
+import ProblemSection from "../components/landing/ProblemSection";
+import SolutionSection from "../components/landing/SolutionSection";
+import TechStackSection from "../components/landing/TechStackSection";
+import CTASection from "../components/landing/CTASection";
 
 export default function HomePage() {
 	return (
-		<main className="p-6">
-			<h1 className="text-2xl font-bold">AMATSI — Smart Irrigation</h1>
-			<p className="mt-2">Frontend placeholder landing page.</p>
-			<p className="mt-4">
-				<a href="/dashboard" className="text-blue-600 underline">
-					Open Dashboard
-				</a>
-			</p>
-		</main>
+		<div className="min-h-screen flex flex-col">
+			<Navbar />
+			<main className="flex-1">
+				<HeroSection />
+				<ProblemSection />
+				<SolutionSection />
+				<TechStackSection />
+				<CTASection />
+			</main>
+			<Footer />
+		</div>
 	);
 }

@@ -20,3 +20,30 @@
  * Feature references: 2.1, 2.3, 2.5, 2.6, 2.7.
  * ============================================================================
  */
+
+import React from "react";
+import Link from "next/link";
+import LoginForm from "../../../components/auth/LoginForm";
+
+export const metadata = {
+	title: "Log In — KijaniFarmer",
+};
+
+export default function LoginPage() {
+	return (
+		<main className="min-h-screen flex items-center justify-center bg-canvas px-4">
+			<div className="w-full max-w-md bg-white rounded-2xl border border-border p-8 shadow-sm">
+				<div className="mb-6 text-center">
+					<Link href="/" className="inline-block">
+						<h1 className="font-serif text-3xl font-bold text-primary">KijaniFarmer</h1>
+					</Link>
+					<p className="text-sm text-secondary mt-1">
+						Welcome back — sign in to see your farm&apos;s advice.
+					</p>
+				</div>
+
+				<LoginForm />
+			</div>
+		</main>
+	);
+}
