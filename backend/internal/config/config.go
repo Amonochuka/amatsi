@@ -65,7 +65,7 @@ func Load() (*AppConfig, error) {
 		Port:                     getEnvOrDefault("PORT", "8080"),
 		JWTTokenTTL:              24 * time.Hour,
 		JWTSigningMethod:         "HS256",
-		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanibox.com"),
+		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
 		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
 		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
 
