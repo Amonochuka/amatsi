@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,6 +54,7 @@ func CreateFarmHandler(c *gin.Context) {
 	}
 	var input struct {
 		Name               string  `json:"name" binding:"required"`
+		DeviceID           *string `json:"device_id"`
 		AreaHectares       float64 `json:"area_hectares" binding:"required"`
 		CropType           string  `json:"crop_type" binding:"required"`
 		SoilType           string  `json:"soil_type" binding:"required"`
@@ -75,6 +77,7 @@ func CreateFarmHandler(c *gin.Context) {
 	farm := &models.Farm{
 		UserID:             userID,
 		Name:               input.Name,
+		DeviceID:           normalizedDeviceID(input.DeviceID),
 		AreaHectares:       input.AreaHectares,
 		CropType:           input.CropType,
 		SoilType:           input.SoilType,
@@ -104,6 +107,7 @@ func UpdateFarmHandler(c *gin.Context) {
 
 	var input struct {
 		Name               string   `json:"name"`
+		DeviceID           *string  `json:"device_id"`
 		AreaHectares       *float64 `json:"area_hectares"`
 		CropType           string   `json:"crop_type"`
 		SoilType           string   `json:"soil_type"`
@@ -128,6 +132,9 @@ func UpdateFarmHandler(c *gin.Context) {
 
 	if input.Name != "" {
 		farm.Name = input.Name
+	}
+	if input.DeviceID != nil {
+		farm.DeviceID = normalizedDeviceID(input.DeviceID)
 	}
 	if input.AreaHectares != nil {
 		farm.AreaHectares = *input.AreaHectares
@@ -186,4 +193,17 @@ func DeleteFarmHandler(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func normalizedDeviceID(deviceID *string) *string {
+	if deviceID == nil {
+		return nil
+	}
+
+	value := strings.TrimSpace(*deviceID)
+	if value == "" {
+		return nil
+	}
+
+	return &value
 }
