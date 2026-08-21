@@ -1,31 +1,54 @@
 import React from "react";
+import TankLevelCard from "../../components/dashboard/TankLevelCard";
+import RecommendationCard from "../../components/dashboard/RecommendationCard";
+import SoilMoistureCard from "../../components/dashboard/SoilMoistureCard";
+import WeatherCard from "../../components/dashboard/WeatherCard";
 import WaterUsageChart from "../../components/dashboard/WaterUsageChart";
 import RecentAlerts from "../../components/dashboard/RecentAlerts";
-import FarmMap from "../../components/dashboard/FarmMap";
-import { mockWaterUsage, mockAlerts } from "../../lib/mock/data";
+import {
+	mockWaterUsage,
+	mockAlerts,
+	mockTankLevel,
+	mockSoilMoisture,
+	mockWeather,
+	mockRecommendation,
+} from "../../lib/mock/data";
 
 export default function DashboardPage() {
 	const usage = mockWaterUsage();
 	const alerts = mockAlerts();
+	const tank = mockTankLevel();
+	const soil = mockSoilMoisture();
+	const weather = mockWeather();
+	const recommendation = mockRecommendation();
 
 	return (
-		<main className="p-6">
-			<h1 className="text-xl font-semibold mb-4">Dashboard</h1>
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="md:col-span-2 space-y-4">
-					<div className="bg-white p-4 rounded shadow">
-						<WaterUsageChart data={usage} />
-					</div>
-					<div className="bg-white p-4 rounded shadow">
-						<FarmMap />
-					</div>
+		<div>
+			<h1 className="font-serif text-4xl font-bold">Field Overview</h1>
+			<p className="text-secondary mt-2 mb-8">Monitor and manage your vital resources.</p>
+
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<div className="lg:col-span-2">
+					<TankLevelCard tank={tank} />
 				</div>
-				<div className="space-y-4">
-					<div className="bg-white p-4 rounded shadow">
-						<RecentAlerts alerts={alerts} />
-					</div>
+				<div className="lg:col-span-1">
+					<RecommendationCard recommendation={recommendation} recipientCount={2} smsCreditsRemaining={38} />
+				</div>
+
+				<div className="lg:col-span-1">
+					<SoilMoistureCard readings={soil} />
+				</div>
+				<div className="lg:col-span-1">
+					<WeatherCard weather={weather} />
+				</div>
+				<div className="lg:col-span-1">
+					<WaterUsageChart data={usage} />
+				</div>
+
+				<div className="lg:col-span-3">
+					<RecentAlerts alerts={alerts} />
 				</div>
 			</div>
-		</main>
+		</div>
 	);
 }

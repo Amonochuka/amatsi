@@ -28,11 +28,17 @@
 // - Keep the Caveat + Inter font overrides to match the current UI
 
 import React from "react";
+import "../styles/tailwind.css";
+
+export const metadata = {
+	title: "KijaniFarmer",
+	description: "AMATSI — Smart Irrigation",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
-			<body>{children}</body>
+			<body className="bg-canvas text-ink font-sans">{children}</body>
 		</html>
 	);
 }

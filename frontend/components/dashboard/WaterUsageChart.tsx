@@ -16,15 +16,22 @@
  * ============================================================================
  */
 
+"use client";
+
+/*
+ * components/dashboard/WaterUsageChart.tsx — WATER USAGE BAR CHART
+ * Component: Person E (Frontend Developer)
+ * Prop-driven 7-day water usage bar chart with mock-data fallback.
+ */
+
 import React from "react";
 import {
 	ResponsiveContainer,
 	BarChart,
 	Bar,
 	XAxis,
-	YAxis,
 	Tooltip,
-	CartesianGrid,
+	Cell,
 } from "recharts";
 
 type DataPoint = { date: string; liters: number };
@@ -44,22 +51,29 @@ const generateMock = (): DataPoint[] => {
 	});
 };
 
-const WaterUsageChart: React.FC<WaterUsageChartProps> = ({ data, height = 220 }) => {
+const WaterUsageChart: React.FC<WaterUsageChartProps> = ({ data, height = 140 }) => {
 	const chartData = data ?? generateMock();
+	const maxIdx = chartData.reduce(
+		(best, d, i) => (d.liters > chartData[best].liters ? i : best),
+		0
+	);
 
 	return (
-		<div className="w-full">
-			<div className="flex items-center justify-between mb-2">
-				<h3 className="text-sm font-medium text-gray-900">Water Usage (7d)</h3>
-			</div>
+		<div className="bg-white rounded-2xl border border-border p-6 h-full">
+			<h3 className="font-serif text-xl font-bold mb-4">Usage (7d)</h3>
 			<div style={{ width: "100%", height }}>
 				<ResponsiveContainer width="100%" height="100%">
-					<BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-						<CartesianGrid strokeDasharray="3 3" />
-						<XAxis dataKey="date" tickFormatter={(d) => String(d).slice(5)} />
-						<YAxis />
-						<Tooltip formatter={(value: number) => `${value} L`} />
-						<Bar dataKey="liters" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+					<BarChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+						<XAxis dataKey="date" hide />
+						<Tooltip
+							formatter={((value: number) => `${value} L`) as any}
+							labelFormatter={(d) => String(d)}
+						/>
+						<Bar dataKey="liters" radius={[4, 4, 0, 0]}>
+							{chartData.map((_, i) => (
+								<Cell key={i} fill={i === maxIdx ? "#E08D3C" : "#C9D6C1"} />
+							))}
+						</Bar>
 					</BarChart>
 				</ResponsiveContainer>
 			</div>

@@ -11,3 +11,14 @@
  * Feature references: 8.5 (theme selector), 14.7 (accessibility contrast).
  * ============================================================================
  */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	@apply bg-canvas text-ink font-sans;
+}
+
+.label-mono {
+	@apply font-mono text-xs uppercase tracking-wide text-secondary;
+}
