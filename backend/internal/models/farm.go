@@ -8,6 +8,7 @@ type Farm struct {
 	ID                 string    `json:"id" db:"id"`
 	UserID             string    `json:"user_id" db:"user_id"`
 	Name               string    `json:"name" db:"name"`
+	DeviceID           *string   `json:"device_id" db:"device_id"`
 	Latitude           float64   `json:"latitude" db:"latitude"`
 	Longitude          float64   `json:"longitude" db:"longitude"`
 	AreaHectares       float64   `json:"area_hectares" db:"area_hectares"`

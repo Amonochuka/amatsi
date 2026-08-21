@@ -9,5 +9,12 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    command: mosquitto -c /mosquitto-no-auth.conf
+
 volumes:
   redis_data:
