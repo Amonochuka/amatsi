@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,7 @@ type RecommendationRequest struct {
 	RainfallProbability float64 `json:"rainfall_probability"`
 	SoilMoisture        float64 `json:"soil_moisture"`
 	TankCapacityLiters  float64 `json:"tank_capacity_liters"`
+	FieldSizeSquareM    float64 `json:"field_size_square_m"`
 }
 
 type RecommendationResponse struct {
@@ -39,8 +41,8 @@ type RecommendationResponse struct {
 }
 
 func (c *PythonAIClient) GetRecommendation(ctx context.Context, reqData *RecommendationRequest) (*RecommendationResponse, error) {
-	url := fmt.Sprintf("%s/predict", c.BaseURL)
-	
+	url := fmt.Sprintf("%s/predict", strings.TrimRight(c.BaseURL, "/"))
+
 	body, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err

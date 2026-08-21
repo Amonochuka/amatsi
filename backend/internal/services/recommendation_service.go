@@ -68,6 +68,7 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 		RainfallProbability: weatherRecord.RainfallProbability,
 		SoilMoisture:        weatherRecord.SoilMoisture,
 		TankCapacityLiters:  farm.TankCapacityLiters,
+		FieldSizeSquareM:    farm.AreaHectares * 10_000,
 	}
 
 	aiRes, err := s.ai.GetRecommendation(ctx, aiReq)
