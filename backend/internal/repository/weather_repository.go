@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/taheeram04/amatsi/backend/internal/models"
+	"github.com/kijanifarmer/backend/internal/models"
 )
 
 type WeatherRepository struct {

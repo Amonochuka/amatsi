@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/taheeram04/amatsi/backend/internal/clients"
-	"github.com/taheeram04/amatsi/backend/internal/models"
-	"github.com/taheeram04/amatsi/backend/internal/repository"
+	"github.com/kijanifarmer/backend/internal/clients"
+	"github.com/kijanifarmer/backend/internal/models"
+	"github.com/kijanifarmer/backend/internal/repository"
 	"time"
 )
 

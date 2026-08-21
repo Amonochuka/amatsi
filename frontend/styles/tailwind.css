@@ -1,0 +1,13 @@
+/*
+ * ============================================================================
+ * styles/tailwind.css — GLOBAL TAILWIND STYLES
+ * Component: Person C + Person E
+ *
+ * Imports Tailwind base/components/utilities and any global custom CSS.
+ * WHAT NEEDS TO BE DONE:
+ * - @tailwind base; @tailwind components; @tailwind utilities;
+ * - CSS custom properties for theme/language color scheme (dark mode, Feature 8.5)
+ * - Base body font (Inter), scrollbar styling
+ * Feature references: 8.5 (theme selector), 14.7 (accessibility contrast).
+ * ============================================================================
+ */
