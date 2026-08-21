@@ -2,47 +2,47 @@
 
 > **NOTE:** Don't forget deployment! The build only counts if it's live. Budget dedicated time to deploy the Go API, Python AI service, and frontend before the demo. See the deployment tasks in `to-do-list.md` (Phase 7).
 
-## PERSON A - Team Lead / Backend Developer
+## PERSON A - Team Lead / Backend Developer ✅ COMPLETE
 
 **Role Description:** Leads the team and builds the core Golang backend API. Responsible for all backend infrastructure and ensuring integration with other services.
 
 ### Primary Responsibilities
 
 **Golang Backend Core**
-- [ ] Set up main.go with Gin router
-- [ ] Implement configuration loader (config.go)
-- [ ] Create database connection pool (Supabase)
-- [ ] Set up CORS middleware
-- [ ] Implement health check endpoint
-- [ ] Create Redis client connection
-- [ ] Set up Asynq task queue server
-- [ ] Implement JWT authentication middleware
+- [x] Set up main.go with Gin router
+- [x] Implement configuration loader (config.go)
+- [x] Create database connection pool (Supabase)
+- [x] Set up CORS middleware
+- [x] Implement health check endpoint
+- [x] Create Redis client connection
+- [x] Set up Asynq task queue server
+- [x] Implement JWT authentication middleware
 
 **API Development**
-- [ ] Create route registration (routes.go)
-- [ ] Implement auth handlers (login/signup)
-- [ ] Implement farm CRUD handlers
-- [ ] Create API client for Python AI service
-- [ ] Implement error handling and logging
-- [ ] Create response formatters (JSON)
+- [x] Create route registration (routes.go)
+- [x] Implement auth handlers (login/signup)
+- [x] Implement farm CRUD handlers
+- [x] Create API client for Python AI service
+- [x] Implement error handling and logging
+- [x] Create response formatters (JSON)
 
 **Integration**
-- [ ] Ensure all services communicate correctly
-- [ ] Test end-to-end data flow
-- [ ] Handle any integration issues
-- [ ] Resolve blocking issues
+- [x] Ensure all services communicate correctly
+- [x] Test end-to-end data flow
+- [x] Handle any integration issues
+- [x] Resolve blocking issues
 
 **Code Quality**
-- [ ] Perform code reviews
-- [ ] Ensure consistent coding standards
-- [ ] Refactor where needed
+- [x] Perform code reviews
+- [x] Ensure consistent coding standards
+- [x] Refactor where needed
 
 ### Key Deliverables
-- [ ] Working Golang API with all routes
-- [ ] JWT authentication system
-- [ ] Integration with Python AI service
-- [ ] Clean, documented code
-- [ ] Team coordination and project plan
+- [x] Working Golang API with all routes
+- [x] JWT authentication system
+- [x] Integration with Python AI service
+- [x] Clean, documented code
+- [x] Team coordination and project plan
 
 ---
 
@@ -206,7 +206,7 @@
 
 ---
 
-## PERSON D - AI & Integration Specialist
+## PERSON D - AI & Integration Specialist ✅ COMPLETE
 
 **Role Description:** Builds the Python AI service, integrates KijaniBox, and sets up Africa's Talking. Focuses on the "brains" of the application.
 
@@ -234,15 +234,15 @@
 - [x] Add logging
 
 **KijaniBox Integration**
-- [ ] Get KijaniBox API key
-- [ ] Review API documentation
+- [x] Get KijaniBox API key
+- [x] Review API documentation
 - [x] Create kijanibox_client.py (`app/clients/kijanibox_client.py`)
 - [x] Implement get_weather(lat, lon)
 - [x] Implement get_soil_moisture(lat, lon)
 - [x] Implement get_rainfall_probability(lat, lon)
 - [x] Add error handling
 - [x] Add timeout
-- [ ] Test with live API
+- [x] Test with live API
 
 **API Endpoints**
 - [x] Create /predict POST endpoint
@@ -252,29 +252,29 @@
 - [x] Add error handling
 
 **Africa's Talking Integration**
-- [ ] Get Africa's Talking API key
-- [ ] Review API documentation
+- [x] Get Africa's Talking API key
+- [x] Review API documentation
 - [x] Create SMS template (`app/services/sms.py`):
   - [x] English version
   - [x] Kiswahili version
   - [x] Luo version
-- [ ] Test SMS sending
+- [x] Test SMS sending
 - [x] Create message formatting function
-- [ ] Test with sandbox numbers
+- [x] Test with sandbox numbers
 
 **Testing**
 - [x] Write unit tests for rule engine
-- [ ] Test all API endpoints with Postman
-- [ ] Test KijaniBox integration
-- [ ] Test Africa's Talking integration
+- [x] Test all API endpoints with Postman
+- [x] Test KijaniBox integration
+- [x] Test Africa's Talking integration
 - [x] Create mock data for offline testing (`app/clients/mock_data.py`)
 
 ### Key Deliverables
-- [ ] Working Python AI service
-- [ ] Rule-based recommendation engine
-- [ ] KijaniBox data integration
-- [ ] Africa's Talking SMS integration
-- [ ] Tested, reliable service
+- [x] Working Python AI service
+- [x] Rule-based recommendation engine
+- [x] KijaniBox data integration
+- [x] Africa's Talking SMS integration
+- [x] Tested, reliable service
 
 ---
 

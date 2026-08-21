@@ -1,4 +1,5 @@
 services:
+  # Python AI Service (FastAPI + Docker)
   - type: web
     name: amatsi-ai
     runtime: docker
@@ -18,3 +19,44 @@ services:
         sync: false
       - key: KIJANIBOX_TIMEOUT_SECONDS
         value: "10"
+
+  # Go Backend API (Gin + pgx + Asynq)
+  - type: web
+    name: amatsi-backend
+    runtime: go
+    rootDir: backend
+    plan: free
+    region: frankfurt
+    buildCommand: go build -o server ./cmd/server/main.go
+    startCommand: ./server
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: GIN_MODE
+        value: release
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:3000,https://amatsi.vercel.app
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: KIJANIBOX_API_KEY
+        sync: false
+      - key: KIJANIBOX_BASE_URL
+        value: https://api.kijanispace.eu
+      - key: AFRICA_TALKING_API_KEY
+        sync: false
+      - key: AFRICA_TALKING_USERNAME
+        value: sandbox
+      - key: AFRICA_TALKING_SENDER_ID
+        value: AMATSI
+      - key: AFRICA_TALKING_CALLBACK_URL
+        value: ""
+      - key: REDIS_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        value: https://amatsi-ai.onrender.com
+      - key: MQTT_BROKER_URL
+        value: ""
