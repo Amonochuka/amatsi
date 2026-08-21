@@ -6,11 +6,11 @@
  * Persistent left navigation for all authenticated dashboard pages.
  *
  * WHAT NEEDS TO BE DONE (Feature 9.x — Sidebar Navigation):
- * 9.1  Dashboard Icon    — 🌾 Overview link         (/dashboard)
- * 9.2  Irrigation Icon   — 💧 Irrigation Advisor    (/dashboard/irrigation)
- * 9.3  Planner Icon      — 🌱 Crop Planner          (/dashboard/planner)
- * 9.4  Farms Icon        — 📊 My Farms              (/dashboard/farms)
- * 9.5  Alerts Icon       — 🔔 Alerts History        (/dashboard/alerts)
+ * 9.1  Dashboard Icon    —  Overview link         (/dashboard)
+ * 9.2  Irrigation Icon   —  Irrigation Advisor    (/dashboard/irrigation)
+ * 9.3  Planner Icon      —  Crop Planner          (/dashboard/planner)
+ * 9.4  Farms Icon        —  My Farms              (/dashboard/farms)
+ * 9.5  Alerts Icon       —  Alerts History        (/dashboard/alerts)
  * 9.6  Settings Icon     — ⚙️ Settings              (/dashboard/settings)
  * 9.7  User Avatar       — Profile picture or initials (from useAuth)
  * 9.8  User Name         — Display farmer name
