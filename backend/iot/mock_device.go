@@ -39,8 +39,8 @@ func main() {
 
 		if cmd.Command == "OPEN_VALVE" {
 			log.Println("==================================================")
-			log.Printf("💧 ACTION: OPENING VALVE FOR %s", deviceID)
-			log.Printf("⏱️ DURATION: %.1f minutes", cmd.DurationMinutes)
+			log.Printf(" ACTION: OPENING VALVE FOR %s", deviceID)
+			log.Printf(" DURATION: %.1f minutes", cmd.DurationMinutes)
 			log.Println("==================================================")
 
 			// Simulate the watering duration (sped up for demonstration)
@@ -49,7 +49,7 @@ func main() {
 				// In reality, this sleeps for `duration` minutes.
 				// We sleep for 5 seconds for simulation purposes.
 				time.Sleep(5 * time.Second)
-				log.Println("✅ ACTION: CLOSING VALVE (Timer finished safely at the edge)")
+				log.Println(" ACTION: CLOSING VALVE (Timer finished safely at the edge)")
 			}(cmd.DurationMinutes)
 		}
 	})

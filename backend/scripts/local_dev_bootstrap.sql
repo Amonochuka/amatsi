@@ -1,4 +1,6 @@
 -- Local-dev shim for the Supabase auth layer so migrations run on plain Postgres.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE SCHEMA IF NOT EXISTS auth;
 
 CREATE TABLE IF NOT EXISTS auth.users (

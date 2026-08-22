@@ -10,7 +10,7 @@ services:
     autoDeploy: true
     envVars:
       - key: ALLOWED_ORIGINS
-        value: http://localhost:3000,https://amatsi.vercel.app
+        value: http://localhost:3000,https://amatsi.vercel.app,https://amatsi-git-main-amatsi.vercel.app
       - key: LOG_LEVEL
         value: INFO
       - key: KIJANIBOX_BASE_URL
@@ -37,7 +37,7 @@ services:
       - key: GIN_MODE
         value: release
       - key: ALLOWED_ORIGINS
-        value: http://localhost:3000,https://amatsi.vercel.app
+        value: http://localhost:3000,https://amatsi.vercel.app,https://amatsi-git-main-amatsi.vercel.app
       - key: SUPABASE_DB_URL
         sync: false
       - key: JWT_SECRET
