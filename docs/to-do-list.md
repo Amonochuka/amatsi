@@ -68,210 +68,210 @@
 ## PHASE 1: BACKEND (Golang)
 
 ### Project Initialization
-- [ ] Navigate to /backend folder
-- [ ] Run go mod init github.com/yourusername/kijanifarmer
-- [ ] Create .env file with all environment variables
-- [ ] Install required Go packages:
-  - [ ] go get github.com/gin-gonic/gin
-  - [ ] go get github.com/jackc/pgx/v5
-  - [ ] go get github.com/joho/godotenv
-  - [ ] go get github.com/golang-jwt/jwt/v5
-  - [ ] go get github.com/rs/cors
-  - [ ] go get github.com/hibiken/asynq
-  - [ ] go get github.com/redis/go-redis/v9
-  - [ ] go get github.com/tech-kenya/africastalkingsms
-  - [ ] go get github.com/google/uuid
-  - [ ] go get github.com/stretchr/testify
+- [x] Navigate to /backend folder
+- [x] Run go mod init github.com/yourusername/kijanifarmer
+- [x] Create .env file with all environment variables
+- [x] Install required Go packages:
+  - [x] go get github.com/gin-gonic/gin
+  - [x] go get github.com/jackc/pgx/v5
+  - [x] go get github.com/joho/godotenv
+  - [x] go get github.com/golang-jwt/jwt/v5
+  - [x] go get github.com/rs/cors
+  - [x] go get github.com/hibiken/asynq
+  - [x] go get github.com/redis/go-redis/v9
+  - [x] go get github.com/tech-kenya/africastalkingsms
+  - [x] go get github.com/google/uuid
+  - [x] go get github.com/stretchr/testify
 
 ### Core Infrastructure
-- [ ] Create /cmd/server/main.go
-- [ ] Implement main() function
-- [ ] Load environment variables with godotenv
-- [ ] Initialize Gin router
-- [ ] Add CORS middleware
-- [ ] Add Logger middleware
-- [ ] Add Recovery middleware (panic handling)
-- [ ] Create health check endpoint: GET /health
-- [ ] Test server runs on port 8080
+- [x] Create /cmd/server/main.go
+- [x] Implement main() function
+- [x] Load environment variables with godotenv
+- [x] Initialize Gin router
+- [x] Add CORS middleware
+- [x] Add Logger middleware
+- [x] Add Recovery middleware (panic handling)
+- [x] Create health check endpoint: GET /health
+- [x] Test server runs on port 8080
 
 ### Database Layer
-- [ ] Create /internal/config/config.go
-- [ ] Load DB connection string from environment
-- [ ] Create /internal/clients/supabase.go
-- [ ] Implement NewSupabasePool() function
-- [ ] Add connection pool configuration (max 10 connections)
-- [ ] Test database connection on startup
-- [ ] Create /internal/repository/farm_repository.go
-- [ ] Implement GetFarmByID(ctx, id)
-- [ ] Implement GetFarmsByFarmer(ctx, farmerID)
-- [ ] Implement CreateFarm(ctx, farm)
-- [ ] Implement UpdateFarm(ctx, farm)
-- [ ] Implement DeleteFarm(ctx, id)
-- [ ] Create /internal/repository/recommendation_repository.go
-- [ ] Implement GetRecommendationsByFarm(ctx, farmID)
-- [ ] Implement CreateRecommendation(ctx, rec)
-- [ ] Implement MarkRecommendationAsRead(ctx, id)
-- [ ] Create /internal/repository/alert_repository.go
-- [ ] Implement CreateSMSLog(ctx, log)
-- [ ] Implement GetSMSLogsByFarmer(ctx, farmerID)
+- [x] Create /internal/config/config.go
+- [x] Load DB connection string from environment
+- [x] Create /internal/clients/supabase.go
+- [x] Implement NewSupabasePool() function
+- [x] Add connection pool configuration (max 10 connections)
+- [x] Test database connection on startup
+- [x] Create /internal/repository/farm_repository.go
+- [x] Implement GetFarmByID(ctx, id)
+- [x] Implement GetFarmsByFarmer(ctx, farmerID)
+- [x] Implement CreateFarm(ctx, farm)
+- [x] Implement UpdateFarm(ctx, farm)
+- [x] Implement DeleteFarm(ctx, id)
+- [x] Create /internal/repository/recommendation_repository.go
+- [x] Implement GetRecommendationsByFarm(ctx, farmID)
+- [x] Implement CreateRecommendation(ctx, rec)
+- [x] Implement MarkRecommendationAsRead(ctx, id)
+- [x] Create /internal/repository/alert_repository.go
+- [x] Implement CreateSMSLog(ctx, log)
+- [x] Implement GetSMSLogsByFarmer(ctx, farmerID)
 
 ### External API Clients
-- [ ] Create /internal/clients/kijanibox.go
-- [ ] Define KijaniBoxClient struct
-- [ ] Implement NewKijaniBoxClient(apiKey, baseURL)
-- [ ] Implement GetWeatherForecast(ctx, lat, lon)
-- [ ] Implement GetSoilMoisture(ctx, lat, lon)
-- [ ] Implement GetRainfallProbability(ctx, lat, lon)
-- [ ] Add error handling for API calls
-- [ ] Add timeout (10 seconds per request)
-- [ ] Add logging for all API calls
-- [ ] Test with Postman/curl
-- [ ] Create /internal/clients/africastalking.go
-- [ ] Define AfricaTalkingClient struct
-- [ ] Implement NewAfricaTalkingClient(apiKey, username, senderID)
-- [ ] Implement SendSMS(ctx, phoneNumber, message)
-- [ ] Add error handling
-- [ ] Test SMS sending
-- [ ] Create /internal/clients/python_ai.go
-- [ ] Define PythonAIClient struct
-- [ ] Implement NewPythonAIClient(baseURL)
-- [ ] Implement GetRecommendation(ctx, farmData)
-- [ ] Add timeout (5 seconds)
-- [ ] Test with Python service (or mock)
+- [x] Create /internal/clients/kijanibox.go
+- [x] Define KijaniBoxClient struct
+- [x] Implement NewKijaniBoxClient(apiKey, baseURL)
+- [x] Implement GetWeatherForecast(ctx, lat, lon)
+- [x] Implement GetSoilMoisture(ctx, lat, lon)
+- [x] Implement GetRainfallProbability(ctx, lat, lon)
+- [x] Add error handling for API calls
+- [x] Add timeout (10 seconds per request)
+- [x] Add logging for all API calls
+- [x] Test with Postman/curl
+- [x] Create /internal/clients/africastalking.go
+- [x] Define AfricaTalkingClient struct
+- [x] Implement NewAfricaTalkingClient(apiKey, username, senderID)
+- [x] Implement SendSMS(ctx, phoneNumber, message)
+- [x] Add error handling
+- [x] Test SMS sending
+- [x] Create /internal/clients/python_ai.go
+- [x] Define PythonAIClient struct
+- [x] Implement NewPythonAIClient(baseURL)
+- [x] Implement GetRecommendation(ctx, farmData)
+- [x] Add timeout (5 seconds)
+- [x] Test with Python service (or mock)
 
 ### Task Queue
-- [ ] Create /internal/clients/redis.go
-- [ ] Implement NewRedisClient(url) using go-redis
-- [ ] Test Redis connection
-- [ ] Create /internal/queue/asynq.go
-- [ ] Initialize Asynq client and server
-- [ ] Create /internal/queue/tasks.go
-- [ ] Define SendSMSTask struct
-- [ ] Implement NewSendSMSTask(phone, message)
-- [ ] Define task type constant: TypeSendSMS
-- [ ] Create /internal/queue/workers/sms_worker.go
-- [ ] Implement SendSMSWorker function
-- [ ] Add task processing logic
-- [ ] Add error handling (retry on failure)
+- [x] Create /internal/clients/redis.go
+- [x] Implement NewRedisClient(url) using go-redis
+- [x] Test Redis connection
+- [x] Create /internal/queue/asynq.go
+- [x] Initialize Asynq client and server
+- [x] Create /internal/queue/tasks.go
+- [x] Define SendSMSTask struct
+- [x] Implement NewSendSMSTask(phone, message)
+- [x] Define task type constant: TypeSendSMS
+- [x] Create /internal/queue/workers/sms_worker.go
+- [x] Implement SendSMSWorker function
+- [x] Add task processing logic
+- [x] Add error handling (retry on failure)
 
 ### API Routes & Handlers
-- [ ] Create /internal/api/routes/routes.go
-- [ ] Register all routes with Gin router:
-  - [ ] POST /api/auth/login
-  - [ ] POST /api/auth/signup
-  - [ ] POST /api/auth/logout
-  - [ ] GET /api/farms
-  - [ ] POST /api/farms
-  - [ ] GET /api/farms/:id
-  - [ ] PUT /api/farms/:id
-  - [ ] DELETE /api/farms/:id
-  - [ ] GET /api/weather/:farmId
-  - [ ] GET /api/soil/:farmId
-  - [ ] GET /api/recommendations/:farmId
-  - [ ] POST /api/recommendations/generate
-  - [ ] POST /api/alerts/send
-  - [ ] GET /api/alerts/history
-- [ ] Create /internal/api/handlers/auth_handler.go
-- [ ] Implement LoginHandler
-- [ ] Implement SignupHandler
-- [ ] Implement LogoutHandler
-- [ ] Add JWT token generation/validation
-- [ ] Add password hashing (bcrypt)
-- [ ] Create /internal/api/handlers/farm_handler.go
-- [ ] Implement GetFarmsHandler
-- [ ] Implement GetFarmHandler
-- [ ] Implement CreateFarmHandler
-- [ ] Implement UpdateFarmHandler
-- [ ] Implement DeleteFarmHandler
-- [ ] Create /internal/api/handlers/weather_handler.go
-- [ ] Implement GetWeatherHandler
-- [ ] Implement GetSoilMoistureHandler
-- [ ] Add Redis caching layer (TTL: 1 hour)
-- [ ] Create /internal/api/handlers/recommendation_handler.go
-- [ ] Implement GetRecommendationsHandler
-- [ ] Implement GenerateRecommendationHandler
-- [ ] Call Python AI service
-- [ ] Store result in Supabase
-- [ ] Create /internal/api/handlers/alert_handler.go
-- [ ] Implement SendAlertHandler
-- [ ] Queue SMS task via Asynq
-- [ ] Implement GetAlertHistoryHandler
+- [x] Create /internal/api/routes/routes.go
+- [x] Register all routes with Gin router:
+  - [x] POST /api/auth/login
+  - [x] POST /api/auth/signup
+  - [x] POST /api/auth/logout
+  - [x] GET /api/farms
+  - [x] POST /api/farms
+  - [x] GET /api/farms/:id
+  - [x] PUT /api/farms/:id
+  - [x] DELETE /api/farms/:id
+  - [x] GET /api/weather/:farmId
+  - [x] GET /api/soil/:farmId
+  - [x] GET /api/recommendations/:farmId
+  - [x] POST /api/recommendations/generate
+  - [x] POST /api/alerts/send
+  - [x] GET /api/alerts/history
+- [x] Create /internal/api/handlers/auth_handler.go
+- [x] Implement LoginHandler
+- [x] Implement SignupHandler
+- [x] Implement LogoutHandler
+- [x] Add JWT token generation/validation
+- [x] Add password hashing (bcrypt)
+- [x] Create /internal/api/handlers/farm_handler.go
+- [x] Implement GetFarmsHandler
+- [x] Implement GetFarmHandler
+- [x] Implement CreateFarmHandler
+- [x] Implement UpdateFarmHandler
+- [x] Implement DeleteFarmHandler
+- [x] Create /internal/api/handlers/weather_handler.go
+- [x] Implement GetWeatherHandler
+- [x] Implement GetSoilMoistureHandler
+- [x] Add Redis caching layer (TTL: 1 hour)
+- [x] Create /internal/api/handlers/recommendation_handler.go
+- [x] Implement GetRecommendationsHandler
+- [x] Implement GenerateRecommendationHandler
+- [x] Call Python AI service
+- [x] Store result in Supabase
+- [x] Create /internal/api/handlers/alert_handler.go
+- [x] Implement SendAlertHandler
+- [x] Queue SMS task via Asynq
+- [x] Implement GetAlertHistoryHandler
 
 ### Authentication Middleware
-- [ ] Create /internal/api/middleware/auth.go
-- [ ] Implement JWT validation middleware
-- [ ] Extract user ID from token
-- [ ] Set user ID in context
-- [ ] Add to protected routes
-- [ ] Create /internal/api/middleware/cors.go
-- [ ] Configure CORS for Vercel frontend
-- [ ] Create /internal/api/middleware/logger.go
-- [ ] Log all requests with method, path, status, duration
+- [x] Create /internal/api/middleware/auth.go
+- [x] Implement JWT validation middleware
+- [x] Extract user ID from token
+- [x] Set user ID in context
+- [x] Add to protected routes
+- [x] Create /internal/api/middleware/cors.go
+- [x] Configure CORS for Vercel frontend
+- [x] Create /internal/api/middleware/logger.go
+- [x] Log all requests with method, path, status, duration
 
 ## PHASE 2: AI SERVICE (Python)
 
 ### Project Initialization
-- [ ] Navigate to /ai-service folder
-- [ ] Create requirements.txt
-- [ ] Add dependencies:
-  - [ ] fastapi==0.104.0
-  - [ ] uvicorn[standard]==0.24.0
-  - [ ] pydantic==2.5.0
-  - [ ] requests==2.31.0
-  - [ ] python-dotenv==1.0.0
-  - [ ] httpx==0.25.0 (for async HTTP)
-- [ ] Create .env file
-- [ ] Install dependencies: pip install -r requirements.txt
+- [x] Navigate to /ai-service folder
+- [x] Create requirements.txt
+- [x] Add dependencies:
+  - [x] fastapi==0.104.0
+  - [x] uvicorn[standard]==0.24.0
+  - [x] pydantic==2.5.0
+  - [x] requests==2.31.0
+  - [x] python-dotenv==1.0.0
+  - [x] httpx==0.25.0 (for async HTTP)
+- [x] Create .env file
+- [x] Install dependencies: pip install -r requirements.txt
 
 ### Core Service
-- [ ] Create /app/main.py
-- [ ] Initialize FastAPI app
-- [ ] Add CORS middleware
-- [ ] Add health check endpoint: GET /health
-- [ ] Add root endpoint: GET /
-- [ ] Create /app/routes/predict.py
-- [ ] Define RecommendationRequest model
-- [ ] Define RecommendationResponse model
-- [ ] Implement POST /predict endpoint
-- [ ] Extract farm data from request (soil, weather, crop)
+- [x] Create /app/main.py
+- [x] Initialize FastAPI app
+- [x] Add CORS middleware
+- [x] Add health check endpoint: GET /health
+- [x] Add root endpoint: GET /
+- [x] Create /app/routes/predict.py
+- [x] Define RecommendationRequest model
+- [x] Define RecommendationResponse model
+- [x] Implement POST /predict endpoint
+- [x] Extract farm data from request (soil, weather, crop)
 
 ### Rule Engine
-- [ ] Create /app/services/recommendation.py
-- [ ] Implement generate_recommendation() function
-- [ ] Implement Rule 1: If rain > 60%, recommend WAIT
-- [ ] Implement Rule 2: If soil < 30%, recommend IRRIGATE
-- [ ] Implement Rule 3: If soil is adequate (30-60%), recommend MONITOR
-- [ ] Implement calculate_water_needed() function
-- [ ] Maize: 30L/m2
-- [ ] Beans: 20L/m2
-- [ ] Tomatoes: 35L/m2
-- [ ] Default: 25L/m2
-- [ ] Implement calculate_water_saved() function
-- [ ] Add error handling
+- [x] Create /app/services/recommendation.py
+- [x] Implement generate_recommendation() function
+- [x] Implement Rule 1: If rain > 60%, recommend WAIT
+- [x] Implement Rule 2: If soil < 30%, recommend IRRIGATE
+- [x] Implement Rule 3: If soil is adequate (30-60%), recommend MONITOR
+- [x] Implement calculate_water_needed() function
+- [x] Maize: 30L/m2
+- [x] Beans: 20L/m2
+- [x] Tomatoes: 35L/m2
+- [x] Default: 25L/m2
+- [x] Implement calculate_water_saved() function
+- [x] Add error handling
 
 ### KijaniBox Python Client
-- [ ] Create /app/services/kijanibox_client.py
-- [ ] Implement get_weather(lat, lon)
-- [ ] Implement get_soil_moisture(lat, lon)
-- [ ] Add error handling
-- [ ] Add timeout
-- [ ] Test with live API
+- [x] Create /app/services/kijanibox_client.py
+- [x] Implement get_weather(lat, lon)
+- [x] Implement get_soil_moisture(lat, lon)
+- [x] Add error handling
+- [x] Add timeout
+- [x] Test with live API
 
 ### Testing
-- [ ] Create /test/test_recommendation.py
-- [ ] Test Rule 1 (rain > 60%)
-- [ ] Test Rule 2 (soil < 30%)
-- [ ] Test Rule 3 (soil adequate)
-- [ ] Test water calculation logic
+- [x] Create /test/test_recommendation.py
+- [x] Test Rule 1 (rain > 60%)
+- [x] Test Rule 2 (soil < 30%)
+- [x] Test Rule 3 (soil adequate)
+- [x] Test water calculation logic
 
 ### Docker Setup
-- [ ] Create Dockerfile
-- [ ] Set base image: python:3.11-slim
-- [ ] Copy requirements.txt
-- [ ] Run pip install -r requirements.txt
-- [ ] Copy application code
-- [ ] Set CMD: uvicorn app.main:app --host 0.0.0.0 --port 8000
-- [ ] Test Docker build locally
+- [x] Create Dockerfile
+- [x] Set base image: python:3.11-slim
+- [x] Copy requirements.txt
+- [x] Run pip install -r requirements.txt
+- [x] Copy application code
+- [x] Set CMD: uvicorn app.main:app --host 0.0.0.0 --port 8000
+- [x] Test Docker build locally
 
 ## PHASE 3: FRONTEND (Next.js)
 
@@ -499,15 +499,15 @@
 ## PHASE 6: SMS & ALERTS
 
 ### SMS Integration
-- [ ] Test Africa's Talking API from Go
-- [ ] Send test SMS to sandbox numbers
-- [ ] Create SMS template:
-  - [ ] English: "Don't irrigate today. 78% rain expected. Save 450L."
-  - [ ] Kiswahili: "Usimwagilie leo. 78% ya mvua inatarajiwa. Okoa 450L."
-  - [ ] Luo: "Kik irigi kawuono. 78% koth biro. Res 450L."
-- [ ] Implement SMS queuing via Asynq
-- [ ] Store SMS logs in Supabase
-- [ ] Track delivery status
+- [x] Test Africa's Talking API from Go
+- [x] Send test SMS to sandbox numbers
+- [x] Create SMS template:
+  - [x] English: "Don't irrigate today. 78% rain expected. Save 450L."
+  - [x] Kiswahili: "Usimwagilie leo. 78% ya mvua inatarajiwa. Okoa 450L."
+  - [x] Luo: "Kik irigi kawuono. 78% koth biro. Res 450L."
+- [x] Implement SMS queuing via Asynq
+- [x] Store SMS logs in Supabase
+- [x] Track delivery status
 
 ### Alert Triggers
 - [ ] Implement daily scheduled recommendations:

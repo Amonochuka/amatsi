@@ -1,25 +1,22 @@
-#   get_rainfall_probability). NOTE: kijanibox_client.py does NOT exist yet in
-#   this scaffold — create it as app/services/kijanibox_client.py.
-# - Apply timeout + rate limiting on outbound calls (Feature 19.9).
-# - Log every request/response for debugging.
-#
-# Feature references: 6.2, 4.x, 19.7, 19.9
-# ============================================================================
+"""HTTP endpoint for irrigation recommendations."""
+
 import logging
-
-from fastapi import APIRouter
-
+from typing import Annotated
+from fastapi import APIRouter, Depends
+from app.clients.kijanibox_client import KijaniboxClient
+from app.clients.mock_data import MockKijaniboxClient
+from app.deps import get_kijanibox_client
 from app.models.request import RecommendationRequest
 from app.models.response import RecommendationResponse
+from app.services.enrichment import enrich_from_kijanibox
 from app.services.recommendation import generate_recommendation
 
-
 logger = logging.getLogger(__name__)
-router = APIRouter()
-
+router = APIRouter(tags=["recommendations"])
 
 @router.post("/predict", response_model=RecommendationResponse)
-def predict(request: RecommendationRequest) -> RecommendationResponse:
-	recommendation = generate_recommendation(request)
-	logger.info("Generated %s recommendation", recommendation.action)
-	return recommendation
+def predict(request: RecommendationRequest, kijanibox: Annotated[KijaniboxClient | MockKijaniboxClient | None, Depends(get_kijanibox_client)]) -> RecommendationResponse:
+    enriched_request = enrich_from_kijanibox(request, kijanibox)
+    recommendation = generate_recommendation(enriched_request)
+    logger.info("Generated %s recommendation for crop=%s", recommendation.action, enriched_request.crop_type)
+    return recommendation

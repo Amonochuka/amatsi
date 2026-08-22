@@ -1,25 +1,6 @@
-fastapi==0.141.1
-uvicorn[standard]==0.52.4
-pydantic==2.13.4
-pytest==9.1.1
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+python-dotenv==1.0.1
 httpx==0.28.1
-# ============================================================================
-# requirements.txt — PYTHON DEPENDENCIES FOR THE AI SERVICE
-# Component: Person D (AI & Integration Specialist)
-#
-# Declares the third-party packages needed to run the FastAPI AI service.
-#
-# WHAT NEEDS TO BE DONE:
-# - Add pinned versions (best practice) of:
-#   - fastapi                 — web framework (app/main.py, app/routes/predict.py)
-#   - uvicorn[standard]       — ASGI server to run the app
-#   - pydantic                — request/response models (app/models/)
-#   - requests or httpx       — HTTP calls to KijaniBox (app/services/kijanibox_client.py)
-#   - python-dotenv           — load .env (API keys, CORS origins, timeouts)
-#   - pytest                  — dev dependency for test/test_recommendation.py
-# - Install with: python -m pip install -r ai-service/requirements.txt
-# - TODO(Person D): pin exact versions already used by the backend, and add
-#   httpx OR requests — pick ONE client library for consistency.
-#
-# Feature references: whole AI service (Person D component)
-# ============================================================================
+pytest==8.3.4

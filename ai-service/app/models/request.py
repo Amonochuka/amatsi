@@ -1,19 +1,21 @@
-from pydantic import BaseModel, Field, field_validator
+"""Schemas accepted by the irrigation recommendation service."""
 
+from typing import Annotated
+from pydantic import BaseModel, ConfigDict, Field
+
+Percentage = Annotated[float, Field(ge=0, le=100)]
+NonNegative = Annotated[float, Field(ge=0)]
+Positive = Annotated[float, Field(gt=0)]
 
 class RecommendationRequest(BaseModel):
-	soil_moisture: float = Field(0, ge=0, le=100)
-	rain_probability: float = Field(0, ge=0, le=100)
-	tank_level: float = Field(0, ge=0)
-	crop_type: str = Field("default", min_length=1, max_length=50)
-	field_size: float = Field(0, ge=0)
-	temperature: float = Field(0, ge=-80, le=80)
-	humidity: float = Field(0, ge=0, le=100)
-	rainfall_expected: float | None = Field(None, ge=0)
-	lat: float | None = Field(None, ge=-90, le=90)
-	lon: float | None = Field(None, ge=-180, le=180)
-
-	@field_validator("crop_type")
-	@classmethod
-	def normalize_crop_type(cls, value: str) -> str:
-		return value.strip().lower()
+    """Environmental and farm data supplied by the Go API gateway."""
+    model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True)
+    crop_type: str = Field(default="other", min_length=1, max_length=100)
+    soil_type: str = Field(default="unknown", min_length=1, max_length=100)
+    temperature: float = Field(default=25.0, ge=-50, le=70)
+    rainfall_probability: Percentage = 0.0
+    soil_moisture: Percentage = 50.0
+    tank_level: NonNegative = Field(default=1_000.0, alias="tank_capacity_liters")
+    field_size_square_m: Positive = Field(default=1_000.0)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
