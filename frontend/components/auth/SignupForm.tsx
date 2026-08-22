@@ -1,218 +1,161 @@
-/*
- * ============================================================================
- * components/auth/SignupForm.tsx — SIGNUP FORM
- * Component: Person C (Frontend Developer)
- *
- * Client component containing the signup form UI and logic.
- *
- * WHAT NEEDS TO BE DONE (Feature 2.x — Authentication):
- * 2.2 Signup Page        — Name, phone, email (optional), password, language
- *                          preference fields
- * 2.4 Form Validation    — Real-time validation:
- *                          - name required
- *                          - phone valid East-African format (validators.ts)
- *                          - password min length + confirm password match
- * 2.5 Loading States     — Spinner + disabled button while submitting
- * 2.6 Error Handling     — Friendly errors (e.g., "Phone already registered")
- * 2.7 Language Selection — Dropdown: English | Kiswahili | Luo (default)
- *
- * Implementation notes:
- * - Store language preference on the farmer profile (used for SMS language 14.5).
- * - On success redirect to /dashboard.
- *
- * Feature references: 2.2, 2.4, 2.5, 2.6, 2.7, 14.5, 14.6.
- * ============================================================================
- */
+'use client';
 
-"use client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Mail, Lock, User, Eye, EyeOff, Leaf } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Input from "../ui/Input";
-import Button from "../ui/Button";
-import { useAuth } from "../../hooks/useAuth";
-import { validateSignupForm } from "../../lib/utils/validators";
-import type { Language } from "../../types";
-
-const LANGUAGE_OPTIONS: Array<{ value: Language; label: string }> = [
-	{ value: "en", label: "English" },
-	{ value: "sw", label: "Kiswahili" },
-	{ value: "luo", label: "Luo" },
-];
-
-interface FormState {
-	name: string;
-	phone: string;
-	email: string;
-	password: string;
-	confirmPassword: string;
-	language: Language;
+interface SignupFormProps {
+  onSwitchToLogin: () => void;
 }
 
-const INITIAL: FormState = {
-	name: "",
-	phone: "",
-	email: "",
-	password: "",
-	confirmPassword: "",
-	language: "en",
-};
+export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
+  const router = useRouter();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-const SignupForm: React.FC = () => {
-	const router = useRouter();
-	const { signUp } = useAuth();
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-	const [form, setForm] = useState<FormState>(INITIAL);
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [submitting, setSubmitting] = useState(false);
-	const [formError, setFormError] = useState<string | null>(null);
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
 
-	const setField =
-		(field: keyof FormState) =>
-		(
-			e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-		) => {
-			setForm((prev) => ({ ...prev, [field]: e.target.value }));
-			setErrors((prev) => ({ ...prev, [field]: "" }));
-		};
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
 
-	// Feature 2.4 — validate on blur for real-time feedback.
-	const handleBlur = (field: keyof FormState) => () => {
-		const validation = validateSignupForm(form);
-		setErrors((prev) => ({ ...prev, [field]: validation.errors[field] ?? "" }));
-	};
+    if (data.session) {
+      localStorage.setItem('supabase_token', data.session.access_token);
+      router.push('/dashboard');
+    } else {
+      onSwitchToLogin();
+    }
+  };
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setFormError(null);
+  return (
+    <div className="relative z-10 w-full flex flex-col items-center text-center text-white px-4">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/60 border border-emerald-500/40 text-[11px] font-semibold text-emerald-300 uppercase tracking-wider mb-6 backdrop-blur-sm">
+        <Leaf className="w-3 h-3 text-emerald-400" />
+        <span>Join Amatsi</span>
+      </div>
 
-		const validation = validateSignupForm(form);
-		if (!validation.valid) {
-			setErrors(validation.errors);
-			return;
-		}
-		setSubmitting(true);
+      <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight mb-3">
+        Join Our <span className="text-amber-500 font-serif">Coop</span>
+      </h1>
 
-		try {
-			await signUp({
-				name: form.name.trim(),
-				phone: form.phone.trim(),
-				email: form.email.trim() || undefined,
-				password: form.password,
-				language: form.language,
-			});
-			router.push("/dashboard");
-		} catch (err) {
-			const message = err instanceof Error ? err.message : "Could not create your account";
-			setFormError(
-				message.toLowerCase().includes("already registered")
-					? "Phone already registered. Try logging in instead."
-					: message
-			);
-		} finally {
-			setSubmitting(false);
-		}
-	};
+      <p className="text-xs text-stone-200/80 max-w-sm mb-8 leading-relaxed font-light">
+        Create your station account to monitor real-time field telemetry and optimize irrigation schedules.
+      </p>
 
-	return (
-		<form onSubmit={handleSubmit} className="space-y-4" noValidate>
-			<Input
-				label="Full name"
-				name="name"
-				placeholder="e.g. Amina Okello"
-				value={form.name}
-				onChange={setField("name")}
-				onBlur={handleBlur("name")}
-				error={errors.name}
-				disabled={submitting}
-				autoComplete="name"
-			/>
+      {error && (
+        <div className="w-full mb-4 p-2.5 rounded-lg bg-red-900/80 border border-red-500/50 text-xs text-red-200">
+          {error}
+        </div>
+      )}
 
-			<Input
-				label="Phone number"
-				name="phone"
-				type="tel"
-				placeholder="+254712345678"
-				hint="Used for SMS alerts (SMS language follows your choice below)."
-				value={form.phone}
-				onChange={setField("phone")}
-				onBlur={handleBlur("phone")}
-				error={errors.phone}
-				disabled={submitting}
-				autoComplete="tel"
-			/>
+      <form onSubmit={handleSignup} className="w-full space-y-4 text-left">
+        <div>
+          <label className="block text-xs font-semibold text-stone-200 mb-1.5">
+            Full Name
+          </label>
+          <div className="relative flex items-center">
+            <User className="absolute left-3.5 w-4 h-4 text-stone-400" />
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Joseph Miller"
+              required
+              className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
+            />
+          </div>
+        </div>
 
-			<Input
-				label="Email (optional)"
-				name="email"
-				type="email"
-				placeholder="you@example.com"
-				value={form.email}
-				onChange={setField("email")}
-				onBlur={handleBlur("email")}
-				error={errors.email}
-				disabled={submitting}
-				autoComplete="email"
-			/>
+        <div>
+          <label className="block text-xs font-semibold text-stone-200 mb-1.5">
+            Email Address
+          </label>
+          <div className="relative flex items-center">
+            <Mail className="absolute left-3.5 w-4 h-4 text-stone-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="farmer.joe@coop.com"
+              required
+              className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
+            />
+          </div>
+        </div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<Input
-					label="Password"
-					name="password"
-					type="password"
-					placeholder="Min 6 characters"
-					value={form.password}
-					onChange={setField("password")}
-					onBlur={handleBlur("password")}
-					error={errors.password}
-					disabled={submitting}
-					autoComplete="new-password"
-				/>
-				<Input
-					label="Confirm password"
-					name="confirmPassword"
-					type="password"
-					placeholder="Repeat password"
-					value={form.confirmPassword}
-					onChange={setField("confirmPassword")}
-					onBlur={handleBlur("confirmPassword")}
-					error={errors.confirmPassword}
-					disabled={submitting}
-					autoComplete="new-password"
-				/>
-			</div>
+        <div>
+          <label className="block text-xs font-semibold text-stone-200 mb-1.5">
+            Password
+          </label>
+          <div className="relative flex items-center">
+            <Lock className="absolute left-3.5 w-4 h-4 text-stone-400" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+              required
+              className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 text-stone-400 hover:text-white transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
 
-			{/* Feature 2.7 / 14.6 — language preference drives UI + SMS language */}
-			<Input
-				label="Preferred language"
-				name="language"
-				type="select"
-				options={LANGUAGE_OPTIONS}
-				value={form.language}
-				onChange={setField("language")}
-				hint="Alerts are sent in this language."
-				disabled={submitting}
-			/>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full mt-2 bg-white hover:bg-stone-100 text-stone-900 font-bold py-3 rounded-xl text-sm transition-all shadow-lg active:scale-[0.99] disabled:opacity-50"
+        >
+          {loading ? 'Creating Account...' : 'Create Station Account'}
+        </button>
+      </form>
 
-			{formError && (
-				<p className="rounded-lg bg-dry-bg text-dry-text text-sm px-3 py-2" role="alert">
-					{formError}
-				</p>
-			)}
+      <div className="relative w-full my-6 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-stone-600/40" />
+        </div>
+        <span className="relative z-10 px-3 bg-transparent text-[11px] text-stone-400 font-medium">
+          Already registered?
+        </span>
+      </div>
 
-			<Button type="submit" fullWidth size="lg" loading={submitting}>
-				{submitting ? "Creating account..." : "Get Started Free"}
-			</Button>
+      <button
+        type="button"
+        onClick={onSwitchToLogin}
+        className="w-full bg-stone-900/40 hover:bg-stone-800/60 border border-stone-600/50 text-white font-bold py-3 rounded-xl text-sm backdrop-blur-md transition-all text-center"
+      >
+        Sign In Instead
+      </button>
 
-			<p className="text-center text-sm text-secondary">
-				Already have an account?{" "}
-				<Link href="/auth/login" className="font-mono text-primary hover:underline">
-					Log in
-				</Link>
-			</p>
-		</form>
-	);
-};
-
-export default SignupForm;
+      <p className="text-[10px] text-stone-400/80 mt-8 leading-relaxed max-w-xs">
+        By signing up, you agree to follow our Farmer Code of Conduct & Cooperative terms.
+      </p>
+    </div>
+  );
+}

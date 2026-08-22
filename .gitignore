@@ -21,3 +21,6 @@ build/
 .DS_Store
 *.log
 *.tsbuildinfo
+
+# Local dev server binary
+backend/amatsi-server

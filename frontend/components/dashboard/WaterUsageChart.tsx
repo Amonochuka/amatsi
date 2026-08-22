@@ -1,29 +1,9 @@
 "use client";
 
 /*
- * ============================================================================
  * components/dashboard/WaterUsageChart.tsx — WATER USAGE BAR CHART
- * Component: Person E (Frontend Developer)
- *
- * Simple, prop-driven implementation of the 7-day water usage bar chart.
- * Falls back to mock data when `data` prop is not supplied so it can be
- * developed and reviewed independently of backend/providers.
- *
- * Notes:
- * - Uses `recharts` for rendering. Install with `npm install recharts`.
- * - Accepts `data` prop of shape [{ date: string, liters: number }].
- * - Exported as default for easy import into dashboard pages.
- * ============================================================================
- */
-
-"use client";
-
-/*
- * components/dashboard/WaterUsageChart.tsx — WATER USAGE BAR CHART
- * Component: Person E (Frontend Developer)
  * Prop-driven 7-day water usage bar chart with mock-data fallback.
  */
-
 import React from "react";
 import {
 	ResponsiveContainer,
@@ -59,19 +39,19 @@ const WaterUsageChart: React.FC<WaterUsageChartProps> = ({ data, height = 140 })
 	);
 
 	return (
-		<div className="bg-white rounded-2xl border border-border p-6 h-full">
-			<h3 className="font-serif text-xl font-bold mb-4">Usage (7d)</h3>
+		<div className="bg-brand-card rounded-2xl border border-stone-200/60 p-6 h-full">
+			<h3 className="font-serif text-xl font-bold text-stone-900 mb-4">Usage (7d)</h3>
 			<div style={{ width: "100%", height }}>
 				<ResponsiveContainer width="100%" height="100%">
 					<BarChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
 						<XAxis dataKey="date" hide />
 						<Tooltip
-							formatter={((value: number) => `${value} L`) as any}
+							formatter={((value: number) => `${value} L`) as never}
 							labelFormatter={(d) => String(d)}
 						/>
 						<Bar dataKey="liters" radius={[4, 4, 0, 0]}>
 							{chartData.map((_, i) => (
-								<Cell key={i} fill={i === maxIdx ? "#E08D3C" : "#C9D6C1"} />
+								<Cell key={i} fill={i === maxIdx ? "#F0A24A" : "#6EE7B7"} />
 							))}
 						</Bar>
 					</BarChart>

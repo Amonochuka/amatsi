@@ -1,36 +1,31 @@
-/**
- * Login Page - Wrapper for the login form
- *
- * LAYOUT:
- * - KijaniFarmer branding at top
- * - Welcome back message
- * - Login form (phone + password)
- * - "Forgot Password?" link below form
- * - "Don't have an account? Sign Up" link
- * - "Continue with SMS OTP" option as alternative
- *
- * DEMO MODE LINK:
- * - Footer section at bottom with: "Launch Demo Mode"
- * - Links to dashboard with simulated data
- * - Allows potential users to try the system without signing up
- * - Shows simulated live dashboard with AI recommendations
- *
- * CONNECTIONS:
- * - Imports LoginForm component
- * - On successful login, redirects to /dashboard/overview
- * - On signup link click, redirects to /auth/signup
- * - Demo mode button triggers local state to show demo dashboard
- * - Connects to backend auth API at /api/auth/login
- */
+'use client';
 
-import LoginForm from "@/components/auth/LoginForm";
+import { useState } from 'react';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { SignupForm } from '@/components/auth/SignupForm';
 
-export default function LoginPage() {
-	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Branding and login form */}
-			<LoginForm />
-			{/* Demo mode link in footer area */}
-		</div>
-	);
+export default function AuthPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  return (
+    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden font-sans">
+      {/* 1. Full-screen Full-bleed Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat scale-105"
+        style={{ backgroundImage: `url('/images/hero-bg.jpeg')` }}
+      />
+
+      {/* 2. Soft Full-screen Overlay to blend text into image */}
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+
+      {/* 3. Fully Transparent Card Container */}
+      <div className="relative z-10 w-full max-w-sm bg-transparent">
+        {isSignUp ? (
+          <SignupForm onSwitchToLogin={() => setIsSignUp(false)} />
+        ) : (
+          <LoginForm onSwitchToSignup={() => setIsSignUp(true)} />
+        )}
+      </div>
+    </main>
+  );
 }

@@ -1,51 +1,18 @@
-/*
- * ============================================================================
- * app/dashboard/settings/page.tsx — SETTINGS  [NEW PAGE — needs route + sidebar link]
- * Component: Person E (Frontend Developer)
- *
- * Account, preference, phone, and subscription management.
- * NOTE: This page is NOT yet in the scaffold — create the folder/route
- *       and add a "Settings" link to the Sidebar (Feature 9.6).
- *
- * WHAT NEEDS TO BE DONE (Feature 8.x — Settings):
- * 8.1  Profile Section       — Edit name, phone, email
- * 8.2  Change Password       — Update account password
- * 8.3  Language Selector     — English | Kiswahili | Luo (affects UI + SMS)
- * 8.4  SMS Preference        — Enable/disable SMS notifications
- * 8.5  Theme Selector        — Light / Dark / Auto
- * 8.6  Phone Numbers Mgmt    — Add/remove additional SMS recipients
- * 8.7  Add Phone Number      — Input: phone + label ("Worker", "Spouse")
- * 8.8  Phone Number List     — Show all registered phones with labels
- * 8.9  Remove Phone Number   — Delete with confirmation
- * 8.10 Primary Phone Badge   — Show which phone is the primary one
- * 8.11 Delete Account        — Delete with confirmation
- * 8.12 Support Contact       — Phone + email for help
- * 8.13 Offline Sync Settings — Configure sync preferences
- * 8.14 About Section         — App version + credits
- * 8.15 Data Source Attribution— Show data sources (KijaniBox, AT, etc.)
- *
- * Monetization / subscription (Feature 17.x):
- * 17.4 Subscription Status   — Show current plan (Free / Premium)
- * 17.5 Upgrade Button        — CTA to upgrade to Premium
- * 17.7 Usage Limits          — Remaining recommendations / SMS
- * 17.1–17.3 Pricing plans    — Link out to /pricing (or inline)
- *
- * Implementation notes:
- * - Phone list is the source for SMS recipient count (Feature 3.12/13.10).
- * - Store preference language for SMS (Feature 14.5).
- *
- * Feature references: 8.1–8.15, 13.4–13.14, 14.1–14.6, 17.1–17.8.
- * ============================================================================
- */
-
 "use client";
 
+/*
+ * app/dashboard/settings/page.tsx — SETTINGS
+ *
+ * Account, preference, phone, and subscription management.
+ * Features 8.x (profile/password/language/SMS/theme/phones), 17.x (plan).
+ */
+
 import React, { useState } from "react";
-import Input from "../../../components/ui/Input";
-import Button from "../../../components/ui/Button";
-import { useAuth } from "../../../hooks/useAuth";
-import { isValidPhone } from "../../../lib/utils/validators";
-import type { Farmer, Language, PhoneLabel, Theme } from "../../../types";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/useAuth";
+import { isValidPhone } from "@/lib/utils/validators";
+import type { Language, PhoneLabel, Theme } from "@/types";
 
 const LANGUAGE_OPTIONS: Array<{ value: Language; label: string }> = [
 	{ value: "en", label: "English" },
@@ -59,16 +26,16 @@ const THEME_OPTIONS: Array<{ value: Theme; label: string }> = [
 	{ value: "auto", label: "Auto" },
 ];
 
-const SECTION_CLASSES = "rounded-2xl border border-border bg-white p-6";
-const SECTION_TITLE = "font-serif text-xl font-bold mb-4";
+const SECTION_CLASSES = "rounded-2xl border border-stone-200/60 bg-brand-card p-6";
+const SECTION_TITLE = "font-serif text-xl font-bold mb-4 text-stone-900";
 
 export default function SettingsPage() {
-	const { user, signOut } = useAuth();
+	const { user, logout } = useAuth();
 
 	// 8.1 — profile state
 	const [profile, setProfile] = useState({
-		name: user?.name ?? "Demo Farmer",
-		phone: user?.phone ?? "+254712345678",
+		name: (user?.user_metadata?.full_name as string | undefined) ?? "Demo Farmer",
+		phone: (user?.user_metadata?.phone as string | undefined) ?? "+254712345678",
 		email: user?.email ?? "demo@kijanifarmer.app",
 	});
 	const [profileSaved, setProfileSaved] = useState(false);
@@ -79,9 +46,9 @@ export default function SettingsPage() {
 	const [passwordSaved, setPasswordSaved] = useState(false);
 
 	// 8.3 / 8.4 / 8.5 — preference state
-	const [language, setLanguage] = useState<Language>(user?.language ?? "en");
-	const [smsEnabled, setSmsEnabled] = useState(user?.sms_enabled ?? true);
-	const [theme, setTheme] = useState<Theme>(user?.theme ?? "auto");
+	const [language, setLanguage] = useState<Language>("en");
+	const [smsEnabled, setSmsEnabled] = useState(true);
+	const [theme, setTheme] = useState<Theme>("auto");
 
 	// 8.6–8.10 — phone management state
 	const [phones, setPhones] = useState<PhoneLabel[]>([
@@ -100,7 +67,7 @@ export default function SettingsPage() {
 
 	const handleSaveProfile = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// TODO(Person E): swap for updateProfile(profile) from lib/api/client.ts
+		// TODO: swap for updateProfile(profile) from lib/api/client.ts
 		setProfileSaved(true);
 		setTimeout(() => setProfileSaved(false), 2500);
 	};
@@ -116,7 +83,7 @@ export default function SettingsPage() {
 			setPasswordError("New password must be at least 6 characters.");
 			return;
 		}
-		// TODO(Person E): swap for changePassword(...) from lib/api/client.ts
+		// TODO: swap for changePassword(...) from lib/api/client.ts
 		setPasswords({ current: "", next: "" });
 		setPasswordSaved(true);
 		setTimeout(() => setPasswordSaved(false), 2500);
@@ -140,8 +107,8 @@ export default function SettingsPage() {
 
 	return (
 		<div>
-			<h1 className="font-serif text-4xl font-bold">Settings</h1>
-			<p className="text-secondary mt-2 mb-8">Manage your account, alerts and subscription.</p>
+			<h1 className="font-serif text-3xl font-bold text-stone-900">Settings</h1>
+			<p className="text-stone-500 mt-2 mb-8">Manage your account, alerts and subscription.</p>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* 8.1 — profile */}
@@ -170,7 +137,7 @@ export default function SettingsPage() {
 						Save profile
 					</Button>
 					{profileSaved && (
-						<p className="mt-2 text-sm text-optimal-text">Profile saved.</p>
+						<p className="mt-2 text-sm text-emerald-700">Profile saved.</p>
 					)}
 				</form>
 
@@ -194,8 +161,8 @@ export default function SettingsPage() {
 							onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
 						/>
 					</div>
-					{passwordError && <p className="mt-2 text-sm text-dry-text">{passwordError}</p>}
-					{passwordSaved && <p className="mt-2 text-sm text-optimal-text">Password updated.</p>}
+					{passwordError && <p className="mt-2 text-sm text-rose-600">{passwordError}</p>}
+					{passwordSaved && <p className="mt-2 text-sm text-emerald-700">Password updated.</p>}
 					<Button type="submit" variant="outline" className="mt-4">
 						Update password
 					</Button>
@@ -215,15 +182,15 @@ export default function SettingsPage() {
 
 						<div>
 							<label className="flex items-center justify-between cursor-pointer">
-								<span className="text-sm font-medium">SMS notifications</span>
+								<span className="text-sm font-medium text-stone-900">SMS notifications</span>
 								<input
 									type="checkbox"
 									checked={smsEnabled}
 									onChange={(e) => setSmsEnabled(e.target.checked)}
-									className="h-5 w-5 accent-primary"
+									className="h-5 w-5 accent-emerald-700"
 								/>
 							</label>
-							<p className="text-xs text-secondary mt-1">
+							<p className="text-xs text-stone-500 mt-1">
 								Get every recommendation by SMS in {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label}.
 							</p>
 						</div>
@@ -237,13 +204,13 @@ export default function SettingsPage() {
 						/>
 
 						{/* 8.13 — offline sync */}
-						<label className="flex items-center justify-between cursor-pointer pt-2 border-t border-border">
-							<span className="text-sm font-medium">Auto-sync when back online</span>
+						<label className="flex items-center justify-between cursor-pointer pt-2 border-t border-stone-200">
+							<span className="text-sm font-medium text-stone-900">Auto-sync when back online</span>
 							<input
 								type="checkbox"
 								checked={autoSync}
 								onChange={(e) => setAutoSync(e.target.checked)}
-								className="h-5 w-5 accent-primary"
+								className="h-5 w-5 accent-emerald-700"
 							/>
 						</label>
 					</div>
@@ -256,14 +223,14 @@ export default function SettingsPage() {
 						{phones.map((phone) => (
 							<li
 								key={phone.phone}
-								className="flex items-center justify-between rounded-lg bg-canvas px-3 py-2"
+								className="flex items-center justify-between rounded-lg bg-brand-bg px-3 py-2"
 							>
 								<div>
-									<p className="text-sm font-mono">{phone.phone}</p>
-									<p className="text-xs text-secondary">
+									<p className="text-sm font-mono text-stone-900">{phone.phone}</p>
+									<p className="text-xs text-stone-500">
 										{phone.label}
 										{phone.isPrimary && (
-											<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-mono uppercase text-white">
+											<span className="ml-2 rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-mono uppercase text-white">
 												Primary
 											</span>
 										)}
@@ -276,13 +243,13 @@ export default function SettingsPage() {
 												onClick={() =>
 													setPhones((prev) => prev.filter((p) => p.phone !== phone.phone))
 												}
-												className="text-xs font-mono text-dry-text hover:underline"
+												className="text-xs font-mono text-rose-600 hover:underline"
 											>
 												Confirm
 											</button>
 											<button
 												onClick={() => setRemovingPhone(null)}
-												className="text-xs font-mono text-secondary hover:underline"
+												className="text-xs font-mono text-stone-500 hover:underline"
 											>
 												Cancel
 											</button>
@@ -290,7 +257,7 @@ export default function SettingsPage() {
 									) : (
 										<button
 											onClick={() => setRemovingPhone(phone.phone)}
-											className="text-xs font-mono text-dry-text hover:underline"
+											className="text-xs font-mono text-rose-600 hover:underline"
 										>
 											Remove
 										</button>
@@ -316,11 +283,11 @@ export default function SettingsPage() {
 									{ value: "Spouse", label: "Spouse" },
 									{ value: "Family", label: "Family" },
 								]}
-								value={newPhone.label}
-								onChange={(e) => setNewPhone({ ...newPhone, label: e.target.value })}
+							value={newPhone.label}
+							onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewPhone({ ...newPhone, label: e.target.value })}
 							/>
 						</div>
-						{phoneError && <p className="text-sm text-dry-text">{phoneError}</p>}
+						{phoneError && <p className="text-sm text-rose-600">{phoneError}</p>}
 						<Button type="submit" variant="outline" size="sm">
 							+ Add phone
 						</Button>
@@ -332,29 +299,27 @@ export default function SettingsPage() {
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 						<div>
 							<h2 className={SECTION_TITLE + " !mb-1"}>Subscription</h2>
-							<p className="text-sm text-secondary">
+							<p className="text-sm text-stone-500">
 								Current plan:{" "}
-								<span className="font-medium text-ink capitalize">{user?.plan ?? "free"}</span>
+								<span className="font-medium text-stone-900 capitalize">free</span>
 							</p>
 						</div>
-						{(user?.plan ?? "free") === "free" ? (
-							<Button>Upgrade to Premium</Button>
-						) : (
-							<Button variant="outline">Manage plan</Button>
-						)}
+						<Button>Upgrade to Premium</Button>
 					</div>
 
 					{/* 17.7 — usage limits */}
 					<div className="grid grid-cols-2 gap-4 mt-5">
-						<div className="rounded-lg bg-canvas p-4">
-							<p className="label-mono">Recommendations left today</p>
-							<p className="font-serif text-2xl font-bold mt-1">
-								{(user?.plan ?? "free") === "free" ? "3 / 5" : "Unlimited"}
+						<div className="rounded-lg bg-brand-bg p-4">
+							<p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">
+								Recommendations left today
 							</p>
+							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">3 / 5</p>
 						</div>
-						<div className="rounded-lg bg-canvas p-4">
-							<p className="label-mono">SMS credits remaining</p>
-							<p className="font-serif text-2xl font-bold mt-1">38</p>
+						<div className="rounded-lg bg-brand-bg p-4">
+							<p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">
+								SMS credits remaining
+							</p>
+							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">38</p>
 						</div>
 					</div>
 				</div>
@@ -364,30 +329,30 @@ export default function SettingsPage() {
 					<h2 className={SECTION_TITLE}>Support &amp; about</h2>
 					<ul className="space-y-2 text-sm">
 						<li>
-							<span className="text-secondary">Support:</span>{" "}
-							<a href="tel:+254700123456" className="font-mono text-primary hover:underline">
+							<span className="text-stone-500">Support:</span>{" "}
+							<a href="tel:+254700123456" className="font-mono text-emerald-800 hover:underline">
 								+254 700 123 456
 							</a>{" "}
 							·{" "}
-							<a href="mailto:support@kijanifarmer.app" className="font-mono text-primary hover:underline">
+							<a href="mailto:support@kijanifarmer.app" className="font-mono text-emerald-800 hover:underline">
 								support@kijanifarmer.app
 							</a>
 						</li>
 						<li>
-							<span className="text-secondary">Version:</span>{" "}
-							<span className="font-mono">0.1.0</span>
+							<span className="text-stone-500">Version:</span>{" "}
+							<span className="font-mono text-stone-900">0.1.0</span>
 						</li>
 						<li>
-							<span className="text-secondary">Data sources:</span> KijaniBox satellite weather
+							<span className="text-stone-500">Data sources:</span> KijaniBox satellite weather
 							&amp; soil · Africa&apos;s Talking SMS · OpenStreetMap
 						</li>
 					</ul>
 				</div>
 
 				{/* 8.11 — danger zone */}
-				<div className={`${SECTION_CLASSES} border-dry-text/30`}>
-					<h2 className={`${SECTION_TITLE} !text-dry-text`}>Danger zone</h2>
-					<p className="text-sm text-secondary mb-4">
+				<div className={`${SECTION_CLASSES} border-rose-300`}>
+					<h2 className={`${SECTION_TITLE} !text-rose-600`}>Danger zone</h2>
+					<p className="text-sm text-stone-500 mb-4">
 						Deleting your account removes your farms, history and stops all SMS alerts. This
 						cannot be undone.
 					</p>
@@ -397,7 +362,7 @@ export default function SettingsPage() {
 								variant="danger"
 								size="sm"
 								onClick={async () => {
-									await signOut();
+									await logout();
 									window.location.href = "/";
 								}}
 							>

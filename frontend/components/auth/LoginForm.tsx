@@ -1,169 +1,171 @@
-/*
- * ============================================================================
- * components/auth/LoginForm.tsx — LOGIN FORM
- * Component: Person C (Frontend Developer)
- *
- * Client component containing the login form UI and logic.
- *
- * WHAT NEEDS TO BE DONE (Feature 2.x — Authentication):
- * 2.1 Login Page           — Phone/email + password fields
- * 2.3 Password Reset       — "Forgot Password?" link/modal (reset via Supabase)
- * 2.4 Form Validation      — Real-time validation (email/phone format, password
- *                            not empty) with inline error messages
- * 2.5 Loading States       — Disable button + show spinner while submitting
- * 2.6 Error Handling       — Show friendly error (e.g., "Invalid credentials")
- *
- * Implementation notes:
- * - Use useAuth hook (hooks/useAuth.ts) or Supabase client directly.
- * - Use lib/utils/validators.ts for validation, lib/api/client.ts for the API.
- * - On success call router.push('/dashboard').
- * - i18n: labels and errors must come from the language provider (14.1–14.6).
- *
- * Feature references: 2.1, 2.3, 2.4, 2.5, 2.6, 2.7.
- * ============================================================================
- */
+'use client';
 
-"use client";
+import { useState } from 'react';
+import { Mail, Lock, Eye, EyeOff, Leaf } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Input from "../ui/Input";
-import Button from "../ui/Button";
-import { useAuth } from "../../hooks/useAuth";
-import { validateLoginForm } from "../../lib/utils/validators";
+interface LoginFormProps {
+  onSwitchToSignup: () => void;
+}
 
-type Language = "en" | "sw" | "luo";
+export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
+  const [email, setEmail] = useState('farmer.joe@coop.com');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-const LANGUAGE_LABELS: Record<Language, string> = {
-	en: "English",
-	sw: "Kiswahili",
-	luo: "Luo",
-};
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-const LoginForm: React.FC = () => {
-	const router = useRouter();
-	const { signIn, resetPassword } = useAuth();
+    try {
+      // 1. Authenticate with Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-	const [identifier, setIdentifier] = useState("");
-	const [password, setPassword] = useState("");
-	const [language, setLanguage] = useState<Language>("en");
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [submitting, setSubmitting] = useState(false);
-	const [formError, setFormError] = useState<string | null>(null);
-	const [resetNotice, setResetNotice] = useState<string | null>(null);
+      if (authError) throw authError;
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setFormError(null);
-		setResetNotice(null);
+      if (data.session) {
+        // 2. Persist access token locally if needed
+        localStorage.setItem('supabase_token', data.session.access_token);
 
-		const validation = validateLoginForm({ identifier, password });
-		if (!validation.valid) {
-			setErrors(validation.errors);
-			return;
-		}
-		setErrors({});
-		setSubmitting(true);
+        // 3. Navigate to main dashboard
+        window.location.href = '/dashboard';
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to authenticate. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-		try {
-			await signIn({ identifier, password });
-			router.push("/dashboard");
-		} catch (err) {
-			setFormError(err instanceof Error ? err.message : "Invalid credentials");
-		} finally {
-			setSubmitting(false);
-		}
-	};
+  return (
+    <div className="w-full flex flex-col items-center text-center text-white">
+      {/* Badge */}
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1b3127]/60 border border-[#2d5241]/80 text-[10px] font-semibold text-[#6ee7b7] uppercase tracking-wider mb-5 backdrop-blur-sm">
+        <Leaf className="w-3 h-3 text-[#34d399]" />
+        <span>Welcome Back to Growfold</span>
+      </div>
 
-	// Feature 2.3 — password reset via phone/email.
-	const handleForgotPassword = async () => {
-		setFormError(null);
-		if (!identifier.includes("@")) {
-			setResetNotice("Enter your email above first, then tap Forgot Password.");
-			return;
-		}
-		try {
-			await resetPassword(identifier);
-			setResetNotice("Password reset link sent. Check your email.");
-		} catch (err) {
-			setFormError(err instanceof Error ? err.message : "Could not send reset link");
-		}
-	};
+      {/* Header */}
+      <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight mb-3">
+        Hey! <span className="text-[#f59e0b] font-serif">Farmers</span>
+      </h1>
 
-	return (
-		<form onSubmit={handleSubmit} className="space-y-4" noValidate>
-			{/* Feature 2.7 — quick language switcher */}
-			<div className="flex items-center gap-2 justify-end">
-				{(Object.keys(LANGUAGE_LABELS) as Language[]).map((lang) => (
-					<button
-						key={lang}
-						type="button"
-						onClick={() => setLanguage(lang)}
-						className={`text-xs font-mono px-2 py-1 rounded-full transition-colors ${
-							language === lang
-								? "bg-primary text-white"
-								: "text-secondary hover:bg-canvas"
-						}`}
-					>
-						{LANGUAGE_LABELS[lang]}
-					</button>
-				))}
-			</div>
+      <p className="text-[11px] text-stone-200/90 max-w-xs mb-6 leading-relaxed font-normal">
+        Sign in to check your soil reports, update crop records, or coordinate your next seasonal harvest.
+      </p>
 
-			<Input
-				label="Phone or email"
-				name="identifier"
-				type="text"
-				placeholder="+254712345678 or you@example.com"
-				value={identifier}
-				onChange={(e) => setIdentifier(e.target.value)}
-				error={errors.identifier}
-				disabled={submitting}
-				autoComplete="username"
-			/>
+      {/* Error Alert Display */}
+      {error && (
+        <div className="w-full mb-4 p-2.5 rounded-lg bg-red-950/80 border border-red-500/50 text-xs text-red-200 text-center backdrop-blur-sm">
+          {error}
+        </div>
+      )}
 
-			<Input
-				label="Password"
-				name="password"
-				type="password"
-				placeholder="Your password"
-				value={password}
-				onChange={(e) => setPassword(e.target.value)}
-				error={errors.password}
-				disabled={submitting}
-				autoComplete="current-password"
-			/>
+      {/* Form Fields */}
+      <form onSubmit={handleLogin} className="w-full space-y-3.5 text-left">
+        {/* Email Field */}
+        <div>
+          <label className="block text-[11px] font-medium text-stone-200 mb-1">
+            Email or Username
+          </label>
+          <div className="relative flex items-center">
+            <Mail className="absolute left-3.5 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="farmer.joe@coop.com"
+              required
+              className="w-full bg-[#2a241e]/40 border border-[#524337]/60 focus:border-[#f59e0b] rounded-lg py-2.5 pl-10 pr-4 text-xs text-white outline-none backdrop-blur-sm transition-all"
+            />
+          </div>
+        </div>
 
-			{formError && (
-				<p className="rounded-lg bg-dry-bg text-dry-text text-sm px-3 py-2" role="alert">
-					{formError}
-				</p>
-			)}
-			{resetNotice && (
-				<p className="rounded-lg bg-optimal-bg text-optimal-text text-sm px-3 py-2">
-					{resetNotice}
-				</p>
-			)}
+        {/* Password Field */}
+        <div>
+          <label className="block text-[11px] font-medium text-stone-200 mb-1">
+            Password
+          </label>
+          <div className="relative flex items-center">
+            <Lock className="absolute left-3.5 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+              required
+              className="w-full bg-[#2a241e]/40 border border-[#524337]/60 focus:border-[#f59e0b] rounded-lg py-2.5 pl-10 pr-10 text-xs text-white outline-none backdrop-blur-sm transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 text-stone-300 hover:text-white transition-colors z-10"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
 
-			<Button type="submit" fullWidth size="lg" loading={submitting}>
-				{submitting ? "Signing in..." : "Log In"}
-			</Button>
+        {/* Checkbox and Link */}
+        <div className="flex items-center justify-between text-[11px] pt-0.5">
+          <label className="flex items-center gap-1.5 text-stone-200 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-stone-600 bg-stone-800 text-emerald-600 focus:ring-0"
+            />
+            <span>Remember my station</span>
+          </label>
+          <button
+            type="button"
+            className="text-[#d97706] hover:text-[#f59e0b] font-semibold transition-colors"
+          >
+            Forgot Password?
+          </button>
+        </div>
 
-			<div className="flex items-center justify-between text-sm">
-				<button
-					type="button"
-					onClick={handleForgotPassword}
-					className="font-mono text-xs text-primary hover:underline"
-				>
-					Forgot password?
-				</button>
-				<Link href="/auth/signup" className="font-mono text-xs text-secondary hover:text-primary">
-					Create account
-				</Link>
-			</div>
-		</form>
-	);
-};
+        {/* Login Submit Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full mt-2 bg-white hover:bg-stone-100 text-[#1b3127] font-bold py-2.5 rounded-lg text-xs transition-all shadow-md active:scale-[0.99] disabled:opacity-50"
+        >
+          {loading ? 'Authenticating...' : 'Login'}
+        </button>
+      </form>
 
-export default LoginForm;
+      {/* Divider */}
+      <div className="relative w-full my-5 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-stone-400/30" />
+        </div>
+        <span className="relative z-10 px-3 bg-transparent text-[10px] text-stone-300 font-medium">
+          New to the Coop?
+        </span>
+      </div>
+
+      {/* Switch Button */}
+      <button
+        type="button"
+        onClick={onSwitchToSignup}
+        className="w-full bg-[#2a241e]/30 hover:bg-[#2a241e]/50 border border-[#524337]/50 text-white font-semibold py-2.5 rounded-lg text-xs backdrop-blur-sm transition-all"
+      >
+        Sign Up
+      </button>
+
+      {/* Terms */}
+      <p className="text-[9px] text-stone-300/80 mt-6 leading-relaxed max-w-xs">
+        By logging in, you agree to our friendly Farmer Code of Conduct & Cooperative terms.
+      </p>
+    </div>
+  );
+}

@@ -1,5 +1,3 @@
-// Shared mock data helpers for frontend development and component previews
-
 // Shared mock data helpers for frontend development and component previews.
 // Swap these out for lib/api/client.ts calls once the Go API is wired up.
 
@@ -8,7 +6,7 @@ import type {
 	SoilMoisture,
 	WeatherData,
 	Recommendation,
-} from "../../types";
+} from "@/types";
 
 export type WaterPoint = { date: string; liters: number };
 export type AlertStatus = "delivered" | "pending" | "failed";

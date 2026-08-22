@@ -1,21 +1,10 @@
-/*
- * ============================================================================
- * components/dashboard/RecentAlerts.tsx — RECENT ALERTS
- * Component: Person E (Frontend Developer)
- *
- * Prop-driven Recent Alerts list with a mock-data fallback so the component
- * can be developed independently of the backend client. Install and wire
- * `lib/api/client.ts#getAlertHistory` later for real data.
- * ============================================================================
- */
+"use client";
 
 /*
  * components/dashboard/RecentAlerts.tsx — RECENT ALERTS
- * Component: Person E (Frontend Developer)
  * Prop-driven Recent Alerts list with a mock-data fallback so the component
  * can be developed independently of the backend client.
  */
-
 import React from "react";
 import Link from "next/link";
 
@@ -58,9 +47,9 @@ const mockAlerts = (): Alert[] => {
 };
 
 const STATUS_CLASSES: Record<AlertStatus, string> = {
-	delivered: "text-optimal-text",
-	pending: "text-caution-text",
-	failed: "text-dry-text",
+	delivered: "text-emerald-700",
+	pending: "text-amber-600",
+	failed: "text-rose-600",
 };
 
 const timeAgo = (iso: string) => {
@@ -75,10 +64,10 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ alerts, limit = 3 }) => {
 	const list = (alerts ?? mockAlerts()).slice(0, limit);
 
 	return (
-		<div className="bg-white rounded-2xl border border-border p-6 h-full">
+		<div className="bg-brand-card rounded-2xl border border-stone-200/60 p-6 h-full">
 			<div className="flex items-center justify-between mb-4">
-				<h3 className="font-serif text-xl font-bold">Recent Alerts</h3>
-				<Link href="/dashboard/alerts" className="text-xs font-mono text-primary hover:underline">
+				<h3 className="font-serif text-xl font-bold text-stone-900">Recent Alerts</h3>
+				<Link href="/dashboard/alerts" className="text-xs font-mono text-emerald-800 hover:underline">
 					View all
 				</Link>
 			</div>
@@ -89,8 +78,8 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ alerts, limit = 3 }) => {
 							{a.status === "delivered" ? "OK" : a.status === "pending" ? "..." : "X"}
 						</span>
 						<div className="flex-1 min-w-0">
-							<p className="text-sm text-ink">{a.message}</p>
-							<p className="text-xs text-secondary mt-0.5">{timeAgo(a.timestamp)}</p>
+							<p className="text-sm text-stone-900">{a.message}</p>
+							<p className="text-xs text-stone-500 mt-0.5">{timeAgo(a.timestamp)}</p>
 						</div>
 					</li>
 				))}

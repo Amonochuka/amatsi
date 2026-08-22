@@ -1,25 +1,20 @@
-/**
- * Signup Page - Wrapper for the signup form
- *
- * LAYOUT:
- * - KijaniFarmer branding at top
- * - "CREATE YOUR ACCOUNT" headline
- * - Signup form fields
- * - Terms of service link at bottom
- *
- * CONNECTIONS:
- * - Imports SignupForm component
- * - On successful signup, stores farmer in Supabase
- * - Redirects to /dashboard with onboarding completion status
- */
+'use client';
 
-import SignupForm from "@/components/auth/SignupForm";
+import { useRouter } from 'next/navigation';
+import { SignupForm } from '@/components/auth/SignupForm';
 
 export default function SignupPage() {
-	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Signup form with three-tier onboarding */}
-			<SignupForm />
-		</div>
-	);
+  const router = useRouter();
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-sm bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h1 className="text-xl font-bold mb-1 text-center">Create Account</h1>
+        <p className="text-xs text-muted-foreground mb-6 text-center">
+          Start optimizing your farm&apos;s water usage
+        </p>
+        <SignupForm onSwitchToLogin={() => router.push('/auth/login')} />
+      </div>
+    </div>
+  );
 }
