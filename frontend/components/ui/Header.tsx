@@ -1,10 +1,10 @@
 'use client';
 
 import { Search, Bell, WifiOff, LogOut } from 'lucide-react';
-import type { User } from '@supabase/supabase-js';
+import type { AuthUser } from '@/types';
 
 interface HeaderProps {
-  user: User | null;
+  user: AuthUser | null;
   onLogout: () => void;
 }
 
@@ -32,7 +32,7 @@ export function Header({ user, onLogout }: HeaderProps) {
         </button>
         {user && (
           <span className="text-stone-600 max-w-[140px] truncate hidden sm:inline">
-            {user.email}
+            {user.full_name || user.phone_number}
           </span>
         )}
         <button

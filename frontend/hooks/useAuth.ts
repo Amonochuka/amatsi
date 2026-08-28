@@ -2,48 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
+import type { AuthUser } from '@/types';
+import { authAPI, getToken, getStoredUser, clearSession } from '@/lib/api/client';
 
 export function useAuth(requireAuth = true) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setUser(session.user);
-        localStorage.setItem('supabase_token', session.access_token);
-      } else if (requireAuth) {
-        router.push('/auth/login');
-      }
-      setLoading(false);
-    };
+    // If a token exists but no user is cached, we are still authenticated —
+    // the dashboard pages will load user-related data from the API directly.
+    const authenticated = !!getToken();
+    if (authenticated && !getStoredUser()) {
+      // Token present, no cached profile. Keep them on the page; profile can
+      // be refreshed later. For now just mark loading complete.
+    }
+    setLoading(false);
 
-    getUser();
+    if (!authenticated && requireAuth) {
+      router.push('/auth/login');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requireAuth]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser(session.user);
-        localStorage.setItem('supabase_token', session.access_token);
-      } else {
-        setUser(null);
-        localStorage.removeItem('supabase_token');
-        if (requireAuth) router.push('/auth/login');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [requireAuth, router]);
+  const refreshProfile = (next: AuthUser) => setUser(next);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('supabase_token');
-    router.push('/auth/login');
+    try {
+      if (getToken()) {
+        await authAPI.logout();
+      }
+    } catch {
+      // ignore network errors on logout
+    } finally {
+      clearSession();
+      setUser(null);
+      router.push('/auth/login');
+    }
   };
 
-  return { user, loading, logout };
+  return { user, loading, logout, refreshProfile };
 }

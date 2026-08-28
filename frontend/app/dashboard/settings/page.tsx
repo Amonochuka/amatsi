@@ -34,8 +34,8 @@ export default function SettingsPage() {
 
 	// 8.1 — profile state
 	const [profile, setProfile] = useState({
-		name: (user?.user_metadata?.full_name as string | undefined) ?? "Demo Farmer",
-		phone: (user?.user_metadata?.phone as string | undefined) ?? "+254712345678",
+		name: user?.full_name ?? "Demo Farmer",
+		phone: user?.phone_number ?? "+254712345678",
 		email: user?.email ?? "demo@kijanifarmer.app",
 	});
 	const [profileSaved, setProfileSaved] = useState(false);

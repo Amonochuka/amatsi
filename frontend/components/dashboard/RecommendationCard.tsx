@@ -8,17 +8,17 @@
  */
 import React, { useState } from "react";
 import { Droplet } from "lucide-react";
-import type { Recommendation } from "@/types";
+import type { DisplayRecommendation } from "@/types";
 import { formatLiters } from "@/lib/utils/formatNumber";
 
 interface RecommendationCardProps {
-	recommendation: Recommendation;
+	recommendation: DisplayRecommendation;
 	recipientCount?: number;
 	smsCreditsRemaining?: number;
 	onSendSMS?: () => void;
 }
 
-const ACTION_STYLES: Record<Recommendation["action"], { badge: string; cta: string }> = {
+const ACTION_STYLES: Record<DisplayRecommendation["action"], { badge: string; cta: string }> = {
 	IRRIGATE: { badge: "bg-white/15 text-white", cta: "bg-brand-orange hover:bg-orange-500" },
 	WAIT: { badge: "bg-emerald-100 text-emerald-800", cta: "bg-emerald-900 hover:bg-emerald-800" },
 	MONITOR: { badge: "bg-amber-100 text-amber-700", cta: "bg-amber-600 hover:bg-amber-700" },

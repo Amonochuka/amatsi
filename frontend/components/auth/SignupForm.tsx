@@ -1,18 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Mail, Lock, User, Eye, EyeOff, Leaf } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
+import { Phone, Lock, User, Eye, EyeOff, Leaf } from 'lucide-react';
+import { authAPI, setSession } from '@/lib/api/client';
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
 }
 
 export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
-  const router = useRouter();
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,27 +21,25 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
     setLoading(true);
     setError(null);
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-
-    if (authError) {
-      setError(authError.message);
+    try {
+      const res = await authAPI.signup({
+        full_name: fullName.trim(),
+        phone_number: phone.trim(),
+        password,
+        language: 'en',
+        sms_enabled: true,
+      });
+      setSession(res.token, res.user);
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        'Failed to create account. Please check your details.';
+      setError(msg);
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    if (data.session) {
-      localStorage.setItem('supabase_token', data.session.access_token);
-      router.push('/dashboard');
-    } else {
-      onSwitchToLogin();
     }
   };
 
@@ -88,15 +84,15 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
         <div>
           <label className="block text-xs font-semibold text-stone-200 mb-1.5">
-            Email Address
+            Phone Number
           </label>
           <div className="relative flex items-center">
-            <Mail className="absolute left-3.5 w-4 h-4 text-stone-400" />
+            <Phone className="absolute left-3.5 w-4 h-4 text-stone-400" />
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="farmer.joe@coop.com"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="0712345678"
               required
               className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
             />
@@ -113,8 +109,9 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
+              placeholder="At least 8 characters"
               required
+              minLength={8}
               className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
             />
             <button
@@ -138,11 +135,8 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
       <div className="relative w-full my-6 flex items-center justify-center">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-stone-600/40" />
+          <div className="border-t border-stone-600/40 w-full" />
         </div>
-        <span className="relative z-10 px-3 bg-transparent text-[11px] text-stone-400 font-medium">
-          Already registered?
-        </span>
       </div>
 
       <button
