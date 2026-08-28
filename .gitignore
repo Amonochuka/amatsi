@@ -17,6 +17,11 @@ frontend/.next/
 out/
 build/
 
+# Vercel + static build artifacts (not part of the Next.js source)
+.vercel/
+frontend/.vercel/
+dist/
+
 # Misc
 .DS_Store
 *.log
