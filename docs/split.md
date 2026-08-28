@@ -134,10 +134,10 @@
 - [ ] Configure Tailwind with custom theme
 - [ ] Set up shadcn/ui components
 
-**Supabase Auth Integration**
-- [ ] Create Supabase client (client.ts)
-- [ ] Implement login page (/auth/login)
-- [ ] Implement signup page (/auth/signup)
+**Backend Auth Integration (phone + password)**
+- [ ] Create backend client in `lib/api/client.ts` (attaches Bearer JWT)
+- [ ] Implement login page (`/auth/login`, phone + password)
+- [ ] Implement signup page (`/auth/signup`, phone + password)
 - [ ] Add form validation (Zod + React Hook Form)
 - [ ] Implement protected routes
 - [ ] Add logout functionality

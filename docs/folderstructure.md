@@ -150,10 +150,10 @@ AMATSI/
 │   │   ├── useOffline.ts
 │   │   └── useRealtime.ts
 │   ├── lib/
-│   │   ├── api/client.ts
-│   │   ├── supabase/
+│   │   ├── api/
 │   │   │   ├── client.ts
-│   │   │   └── server.ts
+│   │   │   └── transform.ts
+│   │   ├── mock/data.ts
 │   │   └── utils/
 │   │       ├── formatDate.ts
 │   │       ├── formatNumber.ts
@@ -167,8 +167,7 @@ AMATSI/
 │   ├── styles/
 │   │   └── tailwind.css
 │   └── types/
-│       ├── index.ts
-│       └── supabase.ts
+│       └── index.ts
 
 └── docs/                     # Documentation
     └── folderstructure.md    # This file

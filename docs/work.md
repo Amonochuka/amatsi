@@ -71,14 +71,14 @@
 | 3 | Install dependencies | `frontend/package.json` | Add required packages |
 | 4 | Configure theme | `frontend/tailwind.config.js` | Custom color theme |
 | 5 | Set up shadcn/ui | `frontend/components/ui/*.tsx` | UI component library |
-| 6 | Create Supabase client | `frontend/lib/supabase/client.ts` | Browser Supabase client |
-| 7 | Create Supabase server client | `frontend/lib/supabase/server.ts` | Server-side Supabase client |
+| 6 | Create backend API client | `frontend/lib/api/client.ts` | Axios client with JWT interceptor |
+| 7 | ~~Create Supabase server client~~ | ~~`frontend/lib/supabase/server.ts`~~ | Removed — auth unified on backend |
 | 8 | Implement login page | `frontend/app/auth/login/page.tsx` | Login page UI and logic |
 | 9 | Implement signup page | `frontend/app/auth/signup/page.tsx` | Signup page UI and logic |
 | 10 | Add form validation | `frontend/lib/utils/validators.ts` | Zod validation schemas |
 | 11 | Implement protected routes | `frontend/middleware.ts` | Route protection middleware |
 | 12 | Add logout functionality | `frontend/components/ui/Sidebar.tsx` | Logout button |
-| 13 | Store JWT token | `frontend/lib/supabase/client.ts` | Token storage in localStorage |
+| 13 | Store JWT token | `frontend/lib/api/client.ts` | Token storage in localStorage |
 | 14 | Create landing page | `frontend/app/page.tsx` | Public landing page |
 | 15 | Hero section | `frontend/app/page.tsx` | Hero with tagline and CTA |
 | 16 | Problem section | `frontend/app/page.tsx` | Statistics and problem statement |
@@ -109,7 +109,7 @@
 | 41 | Cache weather data | `frontend/hooks/useOffline.ts` | localStorage caching |
 | 42 | Cache soil data | `frontend/hooks/useOffline.ts` | localStorage caching |
 | 43 | Sync on reconnect | `frontend/hooks/useOffline.ts` | Auto-sync when online |
-| 44 | Create useRealtime hook | `frontend/hooks/useRealtime.ts` | Supabase Realtime subscription |
+| 44 | Create useRealtime hook | `frontend/hooks/useRealtime.ts` | Polls backend endpoint on interval |
 | 45 | Subscribe to recommendations | `frontend/hooks/useRealtime.ts` | Realtime subscription |
 | 46 | Update dashboard live | `frontend/app/dashboard/page.tsx` | Live dashboard updates |
 | 47 | Create Toast notifications | `frontend/components/ui/Toast.tsx` | Toast notification component |
