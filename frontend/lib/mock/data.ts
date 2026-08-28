@@ -1,16 +1,17 @@
-// Shared mock data helpers for frontend development and component previews.
-// Swap these out for lib/api/client.ts calls once the Go API is wired up.
+/*
+ * lib/mock/data.ts — DETERMINISTIC MOCK DATA FALLBACK
+ * Used when the backend is unreachable or the user has no farm yet, so the
+ * dashboard UI still renders useful content during development.
+ */
 
 import type {
 	TankLevel,
 	SoilMoisture,
 	WeatherData,
-	Recommendation,
+	DisplayRecommendation,
+	WaterPoint,
+	DisplayAlert,
 } from "@/types";
-
-export type WaterPoint = { date: string; liters: number };
-export type AlertStatus = "delivered" | "pending" | "failed";
-export type Alert = { id: string; message: string; timestamp: string; status: AlertStatus };
 
 export const mockWaterUsage = (): WaterPoint[] => {
 	const now = new Date();
@@ -21,7 +22,7 @@ export const mockWaterUsage = (): WaterPoint[] => {
 	});
 };
 
-export const mockAlerts = (): Alert[] => {
+export const mockAlerts = (): DisplayAlert[] => {
 	const now = Date.now();
 	return [
 		{ id: "1", message: "Irrigation recommended for Farm A.", timestamp: new Date(now - 3600_000).toISOString(), status: "delivered" },
@@ -53,7 +54,7 @@ export const mockWeather = (): WeatherData => ({
 	source: "KijaniBox",
 });
 
-export const mockRecommendation = (): Recommendation => ({
+export const mockRecommendation = (): DisplayRecommendation => ({
 	id: "rec-1",
 	farmId: "farm-1",
 	action: "IRRIGATE",
@@ -63,5 +64,4 @@ export const mockRecommendation = (): Recommendation => ({
 	waterSavedL: 450,
 	confidence: "High",
 	createdAt: new Date().toISOString(),
-	read: false,
 });
