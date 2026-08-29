@@ -122,6 +122,10 @@ export const recommendationAPI = {
 // Alerts & SMS (routes/alerts.go)
 // ---------------------------------------------------------------------------
 export const alertAPI = {
+	send: (farmId: string, message: string) =>
+		apiClient
+			.post<{ status: string }>("/alerts/send", { farm_id: farmId, message })
+			.then((r) => r.data),
 	history: (farmId: string) =>
 		apiClient
 			.get<Alert[]>("/alerts/history", { params: { farm_id: farmId } })
