@@ -12,7 +12,6 @@ import type {
 	SignupPayload,
 	AuthUser,
 	Farm,
-	CreateFarmPayload,
 	WeatherResponse,
 	SoilResponse,
 	Recommendation,
@@ -96,13 +95,6 @@ export const authAPI = {
 // ---------------------------------------------------------------------------
 export const farmAPI = {
 	list: () => apiClient.get<Farm[]>("/farms").then((r) => r.data),
-	create: (payload: CreateFarmPayload) =>
-		apiClient.post<Farm>("/farms", payload).then((r) => r.data),
-	get: (farmId: string) =>
-		apiClient.get<Farm>(`/farms/${farmId}`).then((r) => r.data),
-	update: (farmId: string, payload: Partial<CreateFarmPayload>) =>
-		apiClient.put<Farm>(`/farms/${farmId}`, payload).then((r) => r.data),
-	remove: (farmId: string) => apiClient.delete(`/farms/${farmId}`),
 };
 
 // ---------------------------------------------------------------------------
@@ -124,20 +116,12 @@ export const soilAPI = {
 export const recommendationAPI = {
 	history: (farmId: string) =>
 		apiClient.get<Recommendation[]>(`/recommendations/${farmId}`).then((r) => r.data),
-	generate: (farmId: string) =>
-		apiClient
-			.post<Recommendation>("/recommendations/generate", { farm_id: farmId })
-			.then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
 // Alerts & SMS (routes/alerts.go)
 // ---------------------------------------------------------------------------
 export const alertAPI = {
-	send: (farmId: string, message: string) =>
-		apiClient
-			.post<{ status: string }>("/alerts/send", { farm_id: farmId, message })
-			.then((r) => r.data),
 	history: (farmId: string) =>
 		apiClient
 			.get<Alert[]>("/alerts/history", { params: { farm_id: farmId } })
