@@ -64,6 +64,19 @@ export interface Farm {
 	updated_at: string;
 }
 
+export interface CreateFarmPayload {
+	name: string;
+	device_id?: string;
+	area_hectares: number;
+	crop_type: string;
+	soil_type: string;
+	irrigation_method: string;
+	tank_capacity_liters: number;
+	planting_date: string; // YYYY-MM-DD
+	latitude: number;
+	longitude: number;
+}
+
 export interface WeatherPayload {
 	temperature: number;
 	rainfall_probability: number;

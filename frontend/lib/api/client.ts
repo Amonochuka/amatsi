@@ -12,6 +12,7 @@ import type {
 	SignupPayload,
 	AuthUser,
 	Farm,
+	CreateFarmPayload,
 	WeatherResponse,
 	SoilResponse,
 	Recommendation,
@@ -95,6 +96,13 @@ export const authAPI = {
 // ---------------------------------------------------------------------------
 export const farmAPI = {
 	list: () => apiClient.get<Farm[]>("/farms").then((r) => r.data),
+	create: (payload: CreateFarmPayload) =>
+		apiClient.post<Farm>("/farms", payload).then((r) => r.data),
+	get: (farmId: string) =>
+		apiClient.get<Farm>(`/farms/${farmId}`).then((r) => r.data),
+	update: (farmId: string, payload: Partial<CreateFarmPayload>) =>
+		apiClient.put<Farm>(`/farms/${farmId}`, payload).then((r) => r.data),
+	remove: (farmId: string) => apiClient.delete(`/farms/${farmId}`),
 };
 
 // ---------------------------------------------------------------------------
