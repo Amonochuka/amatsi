@@ -29,3 +29,4 @@ dist/
 
 # Local dev server binary
 backend/amatsi-server
+.vercel
