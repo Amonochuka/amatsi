@@ -26,6 +26,7 @@ import (
 	"github.com/kijanifarmer/backend/internal/api/routes"
 	"github.com/kijanifarmer/backend/internal/clients"
 	"github.com/kijanifarmer/backend/internal/config"
+	"github.com/kijanifarmer/backend/internal/migrations"
 	"github.com/kijanifarmer/backend/internal/queue"
 	"github.com/kijanifarmer/backend/internal/queue/workers"
 	"github.com/kijanifarmer/backend/internal/repository"
@@ -57,6 +58,12 @@ func main() {
 	}
 	defer dbPool.Close()
 	slog.Info("Database connected")
+
+	if err := migrations.Run(ctx, dbPool); err != nil {
+		slog.Error("Failed to apply database migrations", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	slog.Info("Database migrations applied")
 
 	redisClient, err := clients.NewRedisClient(ctx, cfg.RedisURL)
 	if err != nil {
