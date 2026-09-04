@@ -68,9 +68,6 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*mod
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) error {
-	// Ensure auth.users row exists for FK (local/demo Supabase schema).
-	_, _ = r.db.Exec(ctx, `INSERT INTO auth.users (id, email) VALUES ($1, $2) ON CONFLICT DO NOTHING`, user.ID, user.Email)
-
 	query := `
 		INSERT INTO users (id, full_name, phone_number, email, password_hash, language, sms_enabled)
 		VALUES ($1, $2, $3, NULLIF($4, ''), $5, $6, $7)
