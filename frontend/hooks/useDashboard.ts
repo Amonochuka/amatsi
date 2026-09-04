@@ -1,12 +1,11 @@
 "use client";
 
 /*
- * hooks/useDashboard.ts — LOAD REAL DASHBOARD DATA WITH MOCK FALLBACK
+ * hooks/useDashboard.ts — LOAD REAL DASHBOARD DATA
  *
  * Fetches the first farm for the logged-in user, then loads weather, soil,
- * recommendations and alerts. Falls back to deterministic mock data whenever
- * the backend is unreachable or the user has no farm yet, so the dashboard
- * always renders.
+ * recommendations and alerts. Returns honest empty states when there is no
+ * farm or data is unavailable — no mock fallbacks.
  */
 import { useEffect, useState } from "react";
 import { farmAPI, weatherAPI, soilAPI, recommendationAPI, alertAPI } from "@/lib/api/client";
@@ -18,14 +17,6 @@ import {
 	mapSoil,
 	mapTankLevel,
 } from "@/lib/api/transform";
-import {
-	mockRecommendation,
-	mockSoilMoisture,
-	mockTankLevel,
-	mockWaterUsage,
-	mockAlerts,
-	mockWeather,
-} from "@/lib/mock/data";
 
 export interface DashboardData {
 	loading: boolean;
@@ -55,6 +46,25 @@ const EMPTY: DashboardData = {
 	onSendSMS: null,
 };
 
+// Placeholder farm used only to derive an empty (zeroed) water-usage chart when
+// the user has not registered a farm yet.
+const EMPTY_FARM: Parameters<typeof mapWaterUsage>[0] = {
+	id: "",
+	user_id: "",
+	name: "",
+	device_id: null,
+	latitude: 0,
+	longitude: 0,
+	area_hectares: 0,
+	crop_type: "",
+	soil_type: "",
+	irrigation_method: "",
+	tank_capacity_liters: 0,
+	planting_date: "",
+	created_at: "",
+	updated_at: "",
+};
+
 export function useDashboard(): DashboardData {
 	const [data, setData] = useState<DashboardData>(EMPTY);
 
@@ -63,26 +73,25 @@ export function useDashboard(): DashboardData {
 		const run = async () => {
 			setData((d) => ({ ...d, loading: true, error: null }));
 
-			// Deterministic mock fallback values.
-			const fallback: DashboardData = {
-				loading: false,
-				error: null,
-				farmId: null,
-				hasFarm: false,
-				weather: mockWeather(),
-				soil: mockSoilMoisture(),
-				recommendation: mockRecommendation(),
-				alerts: mockAlerts(),
-				waterUsage: mockWaterUsage(),
-				tank: mockTankLevel(),
-				onSendSMS: null,
-			};
-
 			try {
 				const farms = await farmAPI.list();
 				if (cancelled) return;
 				if (!farms || farms.length === 0) {
-					setData(fallback);
+					// No farm registered yet — show an honest empty state rather than
+					// fake metrics. Water usage is safe to show as zeros.
+					setData({
+						loading: false,
+						error: null,
+						farmId: null,
+						hasFarm: false,
+						weather: null,
+						soil: [],
+						recommendation: null,
+						alerts: [],
+						waterUsage: mapWaterUsage(EMPTY_FARM),
+						tank: null,
+						onSendSMS: null,
+					});
 					return;
 				}
 
@@ -97,19 +106,17 @@ export function useDashboard(): DashboardData {
 				if (cancelled) return;
 
 				const weather =
-					weatherRes.status === "fulfilled" ? mapWeather(weatherRes.value) : mockWeather();
+					weatherRes.status === "fulfilled" ? mapWeather(weatherRes.value) : null;
 				const soil =
 					soilRes.status === "fulfilled" && soilRes.value.data
 						? [mapSoil(soilRes.value, farm)]
-						: mockSoilMoisture();
+						: [];
 				const recommendation =
 					recs.status === "fulfilled" && recs.value.length > 0
 						? mapRecommendation(recs.value[0])
-						: mockRecommendation();
+						: null;
 				const alertsData =
-					alerts.status === "fulfilled" && alerts.value.length > 0
-						? mapAlerts(alerts.value)
-						: mockAlerts();
+					alerts.status === "fulfilled" ? mapAlerts(alerts.value) : [];
 
 				const recAction = recommendation?.action;
 
@@ -137,7 +144,21 @@ export function useDashboard(): DashboardData {
 							: null,
 				});
 			} catch {
-				if (!cancelled) setData(fallback);
+				if (!cancelled) {
+					setData({
+						loading: false,
+						error: "Could not load dashboard data right now.",
+						farmId: null,
+						hasFarm: false,
+						weather: null,
+						soil: [],
+						recommendation: null,
+						alerts: [],
+						waterUsage: [],
+						tank: null,
+						onSendSMS: null,
+					});
+				}
 			}
 		};
 
