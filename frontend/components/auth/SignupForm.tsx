@@ -51,11 +51,12 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       </div>
 
       <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-        Join Our <span className="text-amber-500 font-serif">Coop</span>
+        Join <span className="text-amber-500 font-serif">Amatsi</span>
       </h1>
 
       <p className="text-xs text-stone-200/80 max-w-sm mb-8 leading-relaxed font-light">
-        Create your station account to monitor real-time field telemetry and optimize irrigation schedules.
+        Create your account to get irrigation advice for your farm, weather
+        updates, and SMS alerts when it is time to water.
       </p>
 
       {error && (
@@ -75,7 +76,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Joseph Miller"
+              placeholder="e.g. Joseph Mwangi"
               required
               className="w-full bg-stone-900/50 border border-stone-600/60 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-stone-400 outline-none backdrop-blur-md transition-all"
             />
@@ -129,7 +130,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           disabled={loading}
           className="w-full mt-2 bg-white hover:bg-stone-100 text-stone-900 font-bold py-3 rounded-xl text-sm transition-all shadow-lg active:scale-[0.99] disabled:opacity-50"
         >
-          {loading ? 'Creating Account...' : 'Create Station Account'}
+          {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
 
@@ -148,7 +149,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       </button>
 
       <p className="text-[10px] text-stone-400/80 mt-8 leading-relaxed max-w-xs">
-        By signing up, you agree to follow our Farmer Code of Conduct & Cooperative terms.
+        By signing up, you agree to Amatsi's terms of service.
       </p>
     </div>
   );

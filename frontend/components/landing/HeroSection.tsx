@@ -4,10 +4,11 @@ export function HeroSection() {
   return (
     <section className="py-20 text-center bg-emerald-900 text-white px-4">
       <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto">
-        Smart Irrigation & Water Management for Smallholders
+        Smart Irrigation & Water Management for Smallholder Farmers
       </h1>
       <p className="mt-4 text-base text-emerald-100 max-w-xl mx-auto">
-        Prevent over-watering, conserve tank storage, and intercept rain forecasts automatically.
+        Amatsi watches your farm's weather and soil, tells you exactly when to
+        irrigate, and saves water when rain is on the way.
       </p>
       <div className="mt-8 flex justify-center gap-4">
         <Link

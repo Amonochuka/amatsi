@@ -40,15 +40,16 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     <div className="w-full flex flex-col items-center text-center text-white">
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1b3127]/60 border border-[#2d5241]/80 text-[10px] font-semibold text-[#6ee7b7] uppercase tracking-wider mb-5 backdrop-blur-sm">
         <Leaf className="w-3 h-3 text-[#34d399]" />
-        <span>Welcome Back to Amatsi</span>
+        <span>Welcome back</span>
       </div>
 
       <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-        Hey! <span className="text-[#f59e0b] font-serif">Farmers</span>
+        Karibu, <span className="text-[#f59e0b] font-serif">Farmer</span>
       </h1>
 
       <p className="text-[11px] text-stone-200/90 max-w-xs mb-6 leading-relaxed font-normal">
-        Sign in to check your soil reports, update crop records, or coordinate your next seasonal harvest.
+        Sign in to view your soil and weather updates, check your irrigation
+        advice, and review your SMS alerts.
       </p>
 
       {error && (
@@ -113,7 +114,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           <div className="w-full border-t border-stone-400/30" />
         </div>
         <span className="relative z-10 px-3 bg-transparent text-[10px] text-stone-300 font-medium">
-          New to the Coop?
+          New to Amatsi?
         </span>
       </div>
 
@@ -126,7 +127,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       </button>
 
       <p className="text-[9px] text-stone-300/80 mt-6 leading-relaxed max-w-xs">
-        By logging in, you agree to our friendly Farmer Code of Conduct & Cooperative terms.
+        By logging in, you agree to Amatsi's terms of service.
       </p>
     </div>
   );
