@@ -22,6 +22,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	backend "github.com/kijanifarmer/backend"
 	"github.com/kijanifarmer/backend/internal/api/middleware"
 	"github.com/kijanifarmer/backend/internal/api/routes"
 	"github.com/kijanifarmer/backend/internal/clients"
@@ -59,7 +60,7 @@ func main() {
 	defer dbPool.Close()
 	slog.Info("Database connected")
 
-	if err := migrations.Run(ctx, dbPool); err != nil {
+	if err := migrations.Run(ctx, dbPool, backend.MigrationFS); err != nil {
 		slog.Error("Failed to apply database migrations", slog.String("error", err.Error()))
 		os.Exit(1)
 	}

@@ -17,16 +17,13 @@ package migrations
 
 import (
 	"context"
-	"embed"
 	"fmt"
+	"io/fs"
 	"sort"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-//go:embed ../migrations/*.sql
-var migrationFS embed.FS
 
 // skipSeedFiles are demo/seed migrations that should only be applied explicitly,
 // never automatically in a hosted deployment.
@@ -37,12 +34,12 @@ var skipSeedFiles = map[string]bool{
 // Run applies all pending migrations. It is idempotent: applied migrations are
 // tracked and skipped on subsequent runs, and each migration executes inside a
 // transaction so a failure rolls back cleanly.
-func Run(ctx context.Context, pool *pgxpool.Pool) error {
+func Run(ctx context.Context, pool *pgxpool.Pool, sqlFS fs.FS) error {
 	if err := ensureTrackingTable(ctx, pool); err != nil {
 		return err
 	}
 
-	applyOrder, err := collectMigrations()
+	applyOrder, err := collectMigrations(sqlFS)
 	if err != nil {
 		return err
 	}
@@ -69,7 +66,7 @@ func Run(ctx context.Context, pool *pgxpool.Pool) error {
 			continue
 		}
 
-		body, err := migrationFS.ReadFile("migrations/" + name)
+		body, err := fs.ReadFile(sqlFS, "migrations/"+name)
 		if err != nil {
 			return fmt.Errorf("failed to read migration %s: %w", name, err)
 		}
@@ -146,8 +143,8 @@ func listApplied(ctx context.Context, pool *pgxpool.Pool) (map[string]bool, erro
 	return applied, rows.Err()
 }
 
-func collectMigrations() ([]string, error) {
-	entries, err := migrationFS.ReadDir("migrations")
+func collectMigrations(sqlFS fs.FS) ([]string, error) {
+	entries, err := fs.ReadDir(sqlFS, "migrations")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read embedded migrations: %w", err)
 	}
