@@ -34,8 +34,8 @@ export default function AlertsPage() {
     (async () => {
       try {
         const data = await farmAPI.list();
-        setFarms(data);
-        if (data.length > 0) setFarmId(data[0].id);
+        setFarms(data ?? []);
+        if (data && data.length > 0) setFarmId(data[0].id);
         setError(null);
       } catch (err: any) {
         setError(err?.response?.data?.error || err?.message || "Failed to load farms.");
@@ -52,7 +52,7 @@ export default function AlertsPage() {
     }
     try {
       const data = await alertAPI.history(id);
-      setAlerts(data);
+      setAlerts(data ?? []);
       setError(null);
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || "Failed to load alerts.");

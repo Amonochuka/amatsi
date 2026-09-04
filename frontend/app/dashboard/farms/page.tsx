@@ -195,7 +195,7 @@ export default function FarmsPage() {
   const load = async () => {
     try {
       const data = await farmAPI.list();
-      setFarms(data);
+      setFarms(data ?? []);
       setError(null);
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || "Failed to load farms.");

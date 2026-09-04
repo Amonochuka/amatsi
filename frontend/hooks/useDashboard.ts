@@ -74,7 +74,7 @@ export function useDashboard(): DashboardData {
 			setData((d) => ({ ...d, loading: true, error: null }));
 
 			try {
-				const farms = await farmAPI.list();
+				const farms = (await farmAPI.list()) ?? [];
 				if (cancelled) return;
 				if (!farms || farms.length === 0) {
 					// No farm registered yet — show an honest empty state rather than
@@ -112,11 +112,13 @@ export function useDashboard(): DashboardData {
 						? [mapSoil(soilRes.value, farm)]
 						: [];
 				const recommendation =
-					recs.status === "fulfilled" && recs.value.length > 0
+					recs.status === "fulfilled" && recs.value && recs.value.length > 0
 						? mapRecommendation(recs.value[0])
 						: null;
 				const alertsData =
-					alerts.status === "fulfilled" ? mapAlerts(alerts.value) : [];
+					alerts.status === "fulfilled" && alerts.value
+						? mapAlerts(alerts.value)
+						: [];
 
 				const recAction = recommendation?.action;
 
