@@ -1,129 +1,206 @@
-'use client';
+"use client";
 
-import { Droplet, RefreshCw, AlertCircle, CloudRain, BarChart3 } from 'lucide-react';
+import { useEffect, useState, useCallback } from "react";
+import { Bell, Droplet, Loader2, Send, CheckCircle2, Clock, XCircle, Tractor } from "lucide-react";
+import { farmAPI, alertAPI } from "@/lib/api/client";
+import type { Farm, Alert } from "@/types";
+import { Button } from "@/components/ui/Button";
 
-export default function FieldOverviewPage() {
+const STATUS_META: Record<Alert["status"], { label: string; icon: React.ReactNode; cls: string }> = {
+  SENT: { label: "Delivered", icon: <CheckCircle2 className="w-4 h-4" />, cls: "text-emerald-700 bg-emerald-50 border-emerald-200/60" },
+  PENDING: { label: "Pending", icon: <Clock className="w-4 h-4" />, cls: "text-amber-700 bg-amber-50 border-amber-200/60" },
+  FAILED: { label: "Failed", icon: <XCircle className="w-4 h-4" />, cls: "text-rose-700 bg-rose-50 border-rose-200/60" },
+};
+
+const timeAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const hrs = Math.floor(diff / (1000 * 60 * 60));
+  if (hrs < 1) return "just now";
+  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 168) return `${Math.floor(hrs / 24)}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
+
+export default function AlertsPage() {
+  const [farms, setFarms] = useState<Farm[]>([]);
+  const [farmId, setFarmId] = useState<string>("");
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await farmAPI.list();
+        setFarms(data);
+        if (data.length > 0) setFarmId(data[0].id);
+        setError(null);
+      } catch (err: any) {
+        setError(err?.response?.data?.error || err?.message || "Failed to load farms.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const loadAlerts = useCallback(async (id: string) => {
+    if (!id) {
+      setAlerts([]);
+      return;
+    }
+    try {
+      const data = await alertAPI.history(id);
+      setAlerts(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.message || "Failed to load alerts.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (farmId) loadAlerts(farmId);
+  }, [farmId, loadAlerts]);
+
+  const handleSend = async () => {
+    if (!farmId || !message.trim()) return;
+    setSending(true);
+    setError(null);
+    try {
+      await alertAPI.send(farmId, message.trim());
+      setMessage("");
+      await loadAlerts(farmId);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.message || "Failed to send alert.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-stone-500">
+        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+        Loading…
+      </div>
+    );
+  }
+
+  if (farms.length === 0) {
+    return (
+      <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-10 text-center">
+        <Bell className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+        <p className="font-serif text-lg font-bold text-stone-700 mb-2">No farms yet</p>
+        <p className="text-sm text-stone-500">
+          Register a farm to manage its SMS alerts and notifications.
+        </p>
+        <div className="mt-6">
+          <Button onClick={() => (window.location.href = "/dashboard/farms")}>
+            <Tractor className="w-4 h-4 mr-1.5" />
+            Add a farm
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 bg-brand-bg min-h-screen p-8 text-stone-900">
+    <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-stone-900">Field Overview</h1>
-        <p className="text-xs text-stone-500 mt-1">Monitor and manage your vital resources.</p>
+        <h1 className="font-serif text-3xl font-bold text-stone-900">Alerts</h1>
+        <p className="text-xs text-stone-500 mt-1">
+          Send SMS alerts and review your notification history.
+        </p>
       </div>
 
-      {/* Main Grid Section */}
-      <div className="grid grid-cols-12 gap-6">
-        
-        {/* Main Reservoir (8 cols) */}
-        <div className="col-span-8 bg-brand-card p-6 rounded-2xl border border-stone-200/60 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
+      {/* Farm selector */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6">
+          <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Send an alert</h2>
+          <div className="space-y-4">
             <div>
-              <div className="flex items-center gap-2">
-                <Droplet className="w-4 h-4 text-emerald-800" />
-                <h2 className="font-serif text-xl font-bold text-stone-900">Main Reservoir</h2>
-              </div>
-              <p className="text-xs text-stone-500 mt-0.5">Central Water Storage</p>
+              <label className="block text-xs font-semibold text-stone-600 mb-1.5">Farm</label>
+              <select
+                value={farmId}
+                onChange={(e) => setFarmId(e.target.value)}
+                className="w-full border border-stone-300 rounded-lg py-2 px-3 text-sm bg-white outline-none focus:border-emerald-600"
+              >
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <span className="bg-emerald-100 text-emerald-800 text-[11px] font-medium px-3 py-1 rounded-full flex items-center gap-1">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              Filling
-            </span>
-          </div>
-
-          <div className="mt-8 flex items-end justify-between">
-            {/* Reservoir Fill Graphic */}
-            <div className="w-1/2 h-24 bg-stone-200/60 rounded-xl relative overflow-hidden">
-              <div className="absolute bottom-0 w-full h-[82%] bg-emerald-200 border-t-2 border-emerald-400"></div>
+            <div>
+              <label className="block text-xs font-semibold text-stone-600 mb-1.5">Message</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+                placeholder="e.g. Soil moisture is low — water your crops today."
+                className="w-full border border-stone-300 rounded-lg py-2 px-3 text-sm outline-none focus:border-emerald-600"
+              />
             </div>
-
-            {/* Metrics */}
-            <div className="text-right space-y-1">
-              <div className="font-serif text-4xl font-bold">82%</div>
-              <p className="text-xs text-stone-500 font-mono">41,000 / 50,000 L</p>
-              <div className="pt-2 text-xs text-stone-600 space-y-0.5">
-                <div className="flex justify-between gap-6"><span>Inflow Rate</span><span className="font-mono font-semibold">120 L/min</span></div>
-                <div className="flex justify-between gap-6"><span>Est. Full</span><span className="font-mono font-semibold">1h 15m</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Required Box (4 cols) */}
-        <div className="col-span-4 bg-brand-accent p-6 rounded-2xl text-white flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-emerald-300" />
-              <h2 className="font-serif text-xl font-bold">Action Required</h2>
-            </div>
-            <p className="text-xs text-emerald-100/90 leading-relaxed">
-              Soil moisture in Field A has dropped below the critical threshold. Immediate irrigation is recommended to prevent yield loss.
-            </p>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <div className="bg-emerald-900/60 p-3 rounded-xl border border-emerald-700/50">
-              <span className="text-[11px] text-emerald-200 uppercase font-mono tracking-wider">Target Volume</span>
-              <div className="font-serif text-2xl font-bold">1,200 L</div>
-            </div>
-            <button className="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
-              <Droplet className="w-4 h-4 fill-current" />
-              Irrigate Now
-            </button>
+            <Button onClick={handleSend} disabled={sending || !message.trim()}>
+              {sending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-1.5" />
+                  Send SMS alert
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
+        {/* Alert history */}
+        <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6 h-full">
+          <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Alert history</h2>
+          {error && <p className="text-sm text-rose-600 mb-3">{error}</p>}
+          {alerts.length === 0 ? (
+            <div className="text-center py-10 text-stone-400">
+              <Bell className="w-10 h-10 mx-auto mb-3 text-stone-300" />
+              <p className="text-sm">No alerts sent yet for this farm.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {alerts.map((a) => {
+                const meta = STATUS_META[a.status];
+                return (
+                  <li key={a.id} className="flex items-start gap-3 rounded-xl border border-stone-200/60 p-3">
+                    <span className={`mt-0.5 grid place-items-center w-8 h-8 rounded-lg border ${meta.cls}`}>
+                      {meta.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-stone-900">{a.message}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">{timeAgo(a.created_at)}</p>
+                    </div>
+                    <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${meta.cls}`}>
+                      {meta.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {/* Secondary Cards Grid */}
-      <div className="grid grid-cols-12 gap-6">
-        
-        {/* Soil Moisture (5 cols) */}
-        <div className="col-span-5 bg-brand-card p-6 rounded-2xl border border-stone-200/60">
-          <h3 className="font-serif text-base font-bold text-stone-900 mb-4">Soil Moisture</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-rose-50 border border-rose-200/60 rounded-xl text-center">
-              <span className="text-xs text-stone-500">Field A</span>
-              <div className="font-serif text-2xl font-bold text-stone-900 my-1">45%</div>
-              <span className="text-[10px] font-bold text-rose-600 uppercase bg-rose-100 px-2 py-0.5 rounded">Low</span>
-            </div>
-            <div className="p-4 bg-emerald-50 border border-emerald-200/60 rounded-xl text-center">
-              <span className="text-xs text-stone-500">Field B</span>
-              <div className="font-serif text-2xl font-bold text-stone-900 my-1">62%</div>
-              <span className="text-[10px] font-bold text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded">Optimal</span>
-            </div>
-          </div>
+      <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Droplet className="w-4 h-4 text-emerald-800" />
+          <span className="text-sm font-semibold text-stone-900">Notifications</span>
         </div>
-
-        {/* Microclimate (3 cols) */}
-        <div className="col-span-3 bg-brand-card p-6 rounded-2xl border border-stone-200/60 flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-stone-700">Microclimate (24h)</span>
-            <CloudRain className="w-4 h-4 text-stone-500" />
-          </div>
-          <div className="space-y-2 text-xs mt-4">
-            <div className="flex justify-between text-stone-600"><span>Rain Prob.</span><span className="font-bold text-stone-900">20%</span></div>
-            <div className="flex justify-between text-stone-600"><span>Expected</span><span className="font-bold text-stone-900">5mm</span></div>
-          </div>
-        </div>
-
-        {/* Usage (4 cols) */}
-        <div className="col-span-4 bg-brand-card p-6 rounded-2xl border border-stone-200/60 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-stone-700">Usage (7d)</span>
-            <BarChart3 className="w-4 h-4 text-stone-500" />
-          </div>
-          {/* Mock Bar Chart */}
-          <div className="flex items-end justify-between gap-2 h-20 pt-4">
-            {[40, 60, 30, 80, 50, 95, 25].map((height, i) => (
-              <div key={i} className="flex-1 bg-stone-200/80 rounded-t-sm h-full flex items-end">
-                <div
-                  className={`w-full rounded-t-sm ${i === 5 ? 'bg-brand-orange' : i === 3 ? 'bg-emerald-950' : 'bg-emerald-300'}`}
-                  style={{ height: `${height}%` }}
-                ></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
+        <p className="text-sm text-stone-500">
+          Alerts are sent via SMS to the phone numbers registered for your account. You can
+          manage SMS recipients and preferences in Settings.
+        </p>
       </div>
     </div>
   );
