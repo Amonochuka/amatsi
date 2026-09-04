@@ -44,7 +44,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       </div>
 
       <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-        Karibu, <span className="text-[#f59e0b] font-serif">Farmer</span>
+        Karibu <span className="text-[#f59e0b] font-serif">mkulima!</span>
       </h1>
 
       <p className="text-[11px] text-stone-200/90 max-w-xs mb-6 leading-relaxed font-normal">
