@@ -32,8 +32,6 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: PORT
-        value: "8080"
       - key: GIN_MODE
         value: release
       - key: ALLOWED_ORIGINS
@@ -42,6 +40,10 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        value: https://amatsi-ai.onrender.com
       - key: KIJANIBOX_API_KEY
         sync: false
       - key: KIJANIBOX_BASE_URL
@@ -52,11 +54,3 @@ services:
         value: sandbox
       - key: AFRICA_TALKING_SENDER_ID
         value: AMATSI
-      - key: AFRICA_TALKING_CALLBACK_URL
-        value: ""
-      - key: REDIS_URL
-        sync: false
-      - key: AI_SERVICE_URL
-        value: https://amatsi-ai.onrender.com
-      - key: MQTT_BROKER_URL
-        value: ""
