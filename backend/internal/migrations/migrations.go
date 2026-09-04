@@ -28,7 +28,8 @@ import (
 // skipSeedFiles are demo/seed migrations that should only be applied explicitly,
 // never automatically in a hosted deployment.
 var skipSeedFiles = map[string]bool{
-	"006_seed_data.sql": true,
+	"000_auth_bootstrap.sql": true,
+	"006_seed_data.sql":      true,
 }
 
 // Run applies all pending migrations. It is idempotent: applied migrations are

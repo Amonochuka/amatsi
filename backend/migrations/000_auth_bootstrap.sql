@@ -3,27 +3,22 @@
 -- Supabase deployments provide the `auth` schema, `auth.users`, and
 -- auth.uid() natively. Standalone PostgreSQL instances do not, so we create
 -- compatible shims here. All statements are idempotent.
--- Skip entirely if the auth schema already exists (Supabase).
+-- NOTE: Skipped on Supabase via skipSeedFiles in migrations.go.
+CREATE SCHEMA IF NOT EXISTS auth;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_namespace WHERE nspname = 'auth'
-    ) THEN
-        CREATE SCHEMA auth;
+CREATE TABLE IF NOT EXISTS auth.users (
+    id UUID PRIMARY KEY,
+    email TEXT UNIQUE,
+    phone TEXT,
+    encrypted_password TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
-        CREATE TABLE auth.users (
-            id UUID PRIMARY KEY,
-            email TEXT UNIQUE,
-            phone TEXT,
-            encrypted_password TEXT,
-            created_at TIMESTAMPTZ DEFAULT now()
-        );
+-- Stub for Supabase's auth.uid(): reads the JWT sub claim if present.
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS UUID AS $$
+    SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID;
+$$ LANGUAGE sql STABLE;
 
-        CREATE OR REPLACE FUNCTION auth.uid() RETURNS UUID AS $$
-            SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::UUID;
-        $$ LANGUAGE sql STABLE;
-    END IF;
-END $$;
-
+-- gen_random_uuid() is provided by pgcrypto in Supabase. Ensure it exists on
+-- plain PostgreSQL so the migrations that rely on it succeed.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
