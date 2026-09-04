@@ -105,6 +105,48 @@ func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([
 	return farms, nil
 }
 
+// ListAllFarms returns every farm across all users. Used by background
+// scheduled tasks (e.g. daily recommendation generation) that iterate over the
+// whole farm population without a user context.
+func (r *FarmRepository) ListAllFarms(ctx context.Context) ([]*models.Farm, error) {
+	query := `
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, tank_capacity_liters, planting_date, created_at, updated_at
+		FROM farms
+		ORDER BY created_at ASC
+	`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var farms []*models.Farm
+	for rows.Next() {
+		farm := &models.Farm{}
+		err := rows.Scan(
+			&farm.ID,
+			&farm.UserID,
+			&farm.Name,
+			&farm.DeviceID,
+			&farm.Latitude,
+			&farm.Longitude,
+			&farm.AreaHectares,
+			&farm.CropType,
+			&farm.SoilType,
+			&farm.IrrigationMethod,
+			&farm.TankCapacityLiters,
+			&farm.PlantingDate,
+			&farm.CreatedAt,
+			&farm.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		farms = append(farms, farm)
+	}
+	return farms, nil
+}
+
 func (r *FarmRepository) UpdateFarm(ctx context.Context, farm *models.Farm) error {
 	query := `
 		UPDATE farms

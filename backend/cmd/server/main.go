@@ -126,8 +126,15 @@ func main() {
 	if asynqServer != nil {
 		atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
 		smsProcessor := workers.NewSMSProcessor(atClient, repository.NewAlertRepository(dbPool))
+		recProcessor := workers.NewRecommendationProcessorFromConfig(
+			dbPool,
+			cfg,
+			asynqClient,
+			mqttClient,
+		)
 		mux := asynq.NewServeMux()
 		mux.HandleFunc(queue.TypeSendSMS, smsProcessor.ProcessTask)
+		mux.HandleFunc(queue.TypeGenerateRecommendations, recProcessor.ProcessTask)
 
 		go func() {
 			slog.Info("Asynq worker starting")
@@ -135,6 +142,37 @@ func main() {
 				slog.Error("Asynq worker failed to start", slog.String("error", err.Error()))
 			}
 		}()
+
+		go func() {
+			slog.Info("Periodic recommendation scheduler starting",
+				slog.String("cron", cfg.RecommendationCron))
+			redisOpt, err := queue.ParseRedisURL(cfg.RedisURL)
+			if err != nil {
+				slog.Error("Failed to parse Redis URL for periodic scheduler",
+					slog.String("error", err.Error()))
+				return
+			}
+			periodicMgr, err := asynq.NewPeriodicTaskManager(
+				asynq.PeriodicTaskManagerOpts{
+					RedisConnOpt:               redisOpt,
+					PeriodicTaskConfigProvider: queue.NewDailyRecommendationsProvider(cfg.RecommendationCron),
+					SyncInterval:               10 * time.Minute,
+				},
+			)
+			if err != nil {
+				slog.Error("Failed to create periodic recommendation scheduler",
+					slog.String("error", err.Error()))
+				return
+			}
+			if err := periodicMgr.Start(); err != nil {
+				slog.Error("Periodic recommendation scheduler failed",
+					slog.String("error", err.Error()))
+			}
+		}()
+	}
+
+	if mqttClient == nil {
+		slog.Warn("MQTT broker not configured — automatic irrigation triggers disabled; SMS alerts still work")
 	}
 
 	srv := &http.Server{

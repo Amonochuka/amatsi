@@ -51,6 +51,9 @@ type AppConfig struct {
 
 	// CORS
 	AllowedOrigins []string
+
+	// Recommendation scheduler
+	RecommendationCron string
 }
 
 // Load reads environment variables from .env (if present) and os.Getenv,
@@ -68,6 +71,7 @@ func Load() (*AppConfig, error) {
 		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
 		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
 		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
+		RecommendationCron:       getEnvOrDefault("RECOMMENDATION_CRON", "0 6 * * *"),
 
 		// Required (loaded below)
 		SupabaseDBURL:         os.Getenv("SUPABASE_DB_URL"),
