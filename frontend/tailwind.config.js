@@ -18,8 +18,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        serif: ['Georgia', 'Times New Roman', 'serif'],
-        sans: ['Segoe UI', 'Arial', 'sans-serif'],
+        serif: ['var(--font-heading)', 'Georgia', 'serif'],
+        sans: ['var(--font-body)', 'Segoe UI', 'Arial', 'sans-serif'],
       },
     },
   },

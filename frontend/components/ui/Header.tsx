@@ -11,7 +11,7 @@ interface HeaderProps {
 export function Header({ user, onLogout }: HeaderProps) {
   return (
     <header className="h-16 flex items-center justify-between px-8 bg-brand-bg border-b border-stone-200/60">
-      <span className="font-serif text-lg font-bold text-stone-900">
+      <span className="font-serif text-xl font-semibold text-stone-900">
         {user?.full_name ? `Karibu, ${user.full_name}` : 'Dashboard'}
       </span>
 

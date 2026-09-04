@@ -18,6 +18,7 @@ import { farmAPI } from "@/lib/api/client";
 import type { CreateFarmPayload, Farm } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { LocationPicker } from "@/components/ui/LocationPicker";
 
 type FarmDraft = CreateFarmPayload;
 
@@ -68,6 +69,10 @@ function FarmForm({ initial, submitLabel, onSubmit, onCancel }: FarmFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (draft.latitude === 0 && draft.longitude === 0) {
+      setError("Please choose your farm location using the search or your current location.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -151,23 +156,13 @@ function FarmForm({ initial, submitLabel, onSubmit, onCancel }: FarmFormProps) {
           value={draft.planting_date}
           onChange={(e) => set("planting_date", e.target.value)}
         />
-        <Input
-          label="Latitude"
-          id="latitude"
-          required
-          type="number"
-          step="any"
-          value={draft.latitude}
-          onChange={(e) => set("latitude", Number(e.target.value))}
-        />
-        <Input
-          label="Longitude"
-          id="longitude"
-          required
-          type="number"
-          step="any"
-          value={draft.longitude}
-          onChange={(e) => set("longitude", Number(e.target.value))}
+        <LocationPicker
+          latitude={draft.latitude}
+          longitude={draft.longitude}
+          onChange={(lat, lon) => {
+            set("latitude", Number(lat));
+            set("longitude", Number(lon));
+          }}
         />
       </div>
 

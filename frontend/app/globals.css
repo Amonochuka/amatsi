@@ -5,10 +5,18 @@
 :root {
   --brand-bg: #F5F1E8;
   --brand-accent: #16301C;
+  --font-heading: 'Fraunces', Georgia, serif;
+  --font-body: 'Public Sans', 'Segoe UI', sans-serif;
 }
 
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--brand-bg);
   color: #1c1917;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-serif {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
 }

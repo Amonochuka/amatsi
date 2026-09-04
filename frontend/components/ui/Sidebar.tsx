@@ -22,10 +22,10 @@ export function Sidebar() {
         {/* Brand Header */}
         <div className="mb-8 px-2">
           <Link href="/dashboard" className="block group">
-            <h1 className="font-serif text-2xl font-bold text-amber-50 group-hover:text-white transition-colors">
+            <h1 className="font-serif text-3xl font-semibold text-amber-50 group-hover:text-white transition-colors">
               Amatsi
             </h1>
-            <p className="text-[11px] text-amber-200/60 font-mono uppercase tracking-wider">
+            <p className="text-[10px] text-amber-200/60 font-mono uppercase tracking-[0.15em] mt-1">
               Smart Irrigation
             </p>
           </Link>

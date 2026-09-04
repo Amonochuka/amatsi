@@ -14,10 +14,10 @@ export function Button({
   ...props
 }: ButtonProps) {
   const variants = {
-    primary: 'bg-brand-accent text-white hover:bg-emerald-950',
-    secondary: 'bg-brand-orange text-white hover:bg-orange-500',
-    outline: 'border border-stone-300 text-stone-700 hover:bg-stone-100',
-    danger: 'bg-rose-600 text-white hover:bg-rose-700',
+    primary: 'bg-brand-accent text-white hover:bg-emerald-950 shadow-sm',
+    secondary: 'bg-brand-orange text-white hover:bg-orange-500 shadow-sm',
+    outline: 'border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 hover:border-stone-400',
+    danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm',
     ghost: 'text-stone-600 hover:bg-stone-100',
   };
   const sizes = {
@@ -26,7 +26,7 @@ export function Button({
   };
   return (
     <button
-      className={`rounded-lg font-semibold transition-colors disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`rounded-lg font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}
