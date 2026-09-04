@@ -23,7 +23,7 @@ export const TOKEN_KEY = "amatsi_token";
 export const USER_KEY = "amatsi_user";
 
 export const apiClient = axios.create({
-	baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+	baseURL: "https://amatsi-backend.onrender.com",
 	headers: {
 		"Content-Type": "application/json",
 	},
