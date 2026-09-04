@@ -65,6 +65,7 @@ func NewRecommendationProcessorFromConfig(
 		mqttClient,
 		services.NewAlertService(
 			repository.NewAlertRepository(db),
+			repository.NewPhoneRepository(db),
 			asynqClient,
 		),
 	)

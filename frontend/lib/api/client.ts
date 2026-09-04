@@ -17,6 +17,7 @@ import type {
 	SoilResponse,
 	Recommendation,
 	Alert,
+	UserPhone,
 } from "@/types";
 
 export const TOKEN_KEY = "amatsi_token";
@@ -147,4 +148,14 @@ export const alertAPI = {
 		apiClient
 			.get<Alert[]>("/alerts/history", { params: { farm_id: farmId } })
 			.then((r) => r.data ?? []),
+};
+
+// ---------------------------------------------------------------------------
+// SMS recipients (routes.go: /phones)
+// ---------------------------------------------------------------------------
+export const phoneAPI = {
+	list: () => apiClient.get<UserPhone[]>("/phones").then((r) => r.data ?? []),
+	add: (phone: string, label: string) =>
+		apiClient.post<UserPhone>("/phones", { phone_number: phone, label }).then((r) => r.data),
+	remove: (id: string) => apiClient.delete(`/phones/${id}`).then((r) => r.data),
 };

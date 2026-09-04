@@ -148,6 +148,15 @@ export interface PhoneLabel {
 	isPrimary: boolean;
 }
 
+export interface UserPhone {
+	id: string;
+	user_id: string;
+	phone_number: string;
+	label: string;
+	is_primary: boolean;
+	created_at: string;
+}
+
 export interface DisplayAlert {
 	id: string;
 	message: string;

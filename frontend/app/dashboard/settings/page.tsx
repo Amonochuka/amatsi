@@ -7,13 +7,13 @@
  * Features 8.x (profile/password/language/SMS/theme/phones), 17.x (plan).
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { authAPI, setSession, getStoredUser, TOKEN_KEY } from "@/lib/api/client";
+import { authAPI, phoneAPI, setSession, getStoredUser, TOKEN_KEY } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
-import type { Language, PhoneLabel, Theme } from "@/types";
+import type { Language, Theme, UserPhone } from "@/types";
 
 const LANGUAGE_OPTIONS: Array<{ value: Language; label: string }> = [
 	{ value: "en", label: "English" },
@@ -58,14 +58,20 @@ export default function SettingsPage() {
 	const [prefsSaved, setPrefsSaved] = useState(false);
 
 	// 8.6–8.10 — phone management state (primary phone from the real account)
-	const [phones, setPhones] = useState<PhoneLabel[]>(
-		user?.phone_number
-			? [{ phone: user.phone_number, label: "Primary", isPrimary: true }]
-			: []
-	);
+	const [phones, setPhones] = useState<UserPhone[]>([]);
+	const [phonesLoading, setPhonesLoading] = useState(true);
 	const [newPhone, setNewPhone] = useState({ phone: "", label: "Worker" });
 	const [phoneError, setPhoneError] = useState<string | null>(null);
 	const [removingPhone, setRemovingPhone] = useState<string | null>(null);
+
+	// Load additional SMS recipients from the backend once.
+	useEffect(() => {
+		phoneAPI
+			.list()
+			.then(setPhones)
+			.catch(() => {})
+			.finally(() => setPhonesLoading(false));
+	}, []);
 
 	// 8.11 — delete account confirmation
 	const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
@@ -148,20 +154,40 @@ export default function SettingsPage() {
 		}
 	};
 
-	// 8.7 — add an additional recipient.
-	const handleAddPhone = (e: React.FormEvent) => {
+	// 8.7 — add an additional recipient (persisted to the backend).
+	const handleAddPhone = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setPhoneError(null);
 		if (!isValidPhone(newPhone.phone)) {
 			setPhoneError("Enter a valid phone e.g. +254712345678");
 			return;
 		}
-		if (phones.some((p) => p.phone === newPhone.phone)) {
+		if (
+			user?.phone_number === newPhone.phone ||
+			phones.some((p) => p.phone_number === newPhone.phone)
+		) {
 			setPhoneError("This number is already registered.");
 			return;
 		}
-		setPhones((prev) => [...prev, { ...newPhone, isPrimary: false }]);
-		setNewPhone({ phone: "", label: "Worker" });
-		setPhoneError(null);
+		try {
+			const created = await phoneAPI.add(newPhone.phone, newPhone.label);
+			setPhones((prev) => [...prev, created]);
+			setNewPhone({ phone: "", label: "Worker" });
+		} catch (err: any) {
+			const msg = err?.response?.data?.error || "Failed to add phone.";
+			setPhoneError(msg);
+		}
+	};
+
+	// 8.8 — remove an additional recipient (persisted to the backend).
+	const handleRemovePhone = async (id: string) => {
+		try {
+			await phoneAPI.remove(id);
+			setPhones((prev) => prev.filter((p) => p.id !== id));
+			setRemovingPhone(null);
+		} catch {
+			setPhoneError("Failed to remove phone.");
+		}
 	};
 
 	return (
@@ -283,52 +309,61 @@ export default function SettingsPage() {
 				{/* 8.6–8.10 — phone number management */}
 				<div className={SECTION_CLASSES}>
 					<h2 className={SECTION_TITLE}>SMS recipients</h2>
+					{phonesLoading ? (
+						<p className="text-sm text-stone-500 mb-4">Loading recipients...</p>
+					) : (
 					<ul className="space-y-2 mb-4">
+						{user?.phone_number && (
+							<li className="flex items-center justify-between rounded-lg bg-brand-bg px-3 py-2">
+								<div>
+									<p className="text-sm font-mono text-stone-900">{user.phone_number}</p>
+									<p className="text-xs text-stone-500">
+										<span className="rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-mono uppercase text-white">
+											Primary
+										</span>
+									</p>
+								</div>
+							</li>
+						)}
 						{phones.map((phone) => (
 							<li
-								key={phone.phone}
+								key={phone.id}
 								className="flex items-center justify-between rounded-lg bg-brand-bg px-3 py-2"
 							>
 								<div>
-									<p className="text-sm font-mono text-stone-900">{phone.phone}</p>
-									<p className="text-xs text-stone-500">
-										{phone.label}
-										{phone.isPrimary && (
-											<span className="ml-2 rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-mono uppercase text-white">
-												Primary
-											</span>
-										)}
-									</p>
+									<p className="text-sm font-mono text-stone-900">{phone.phone_number}</p>
+									<p className="text-xs text-stone-500">{phone.label}</p>
 								</div>
-								{!phone.isPrimary &&
-									(removingPhone === phone.phone ? (
-										<div className="flex gap-2">
-											<button
-												onClick={() =>
-													setPhones((prev) => prev.filter((p) => p.phone !== phone.phone))
-												}
-												className="text-xs font-mono text-rose-600 hover:underline"
-											>
-												Confirm
-											</button>
-											<button
-												onClick={() => setRemovingPhone(null)}
-												className="text-xs font-mono text-stone-500 hover:underline"
-											>
-												Cancel
-											</button>
-										</div>
-									) : (
+								{removingPhone === phone.id ? (
+									<div className="flex gap-2">
 										<button
-											onClick={() => setRemovingPhone(phone.phone)}
+											onClick={() => handleRemovePhone(phone.id)}
 											className="text-xs font-mono text-rose-600 hover:underline"
 										>
-											Remove
+											Confirm
 										</button>
-									))}
+										<button
+											onClick={() => setRemovingPhone(null)}
+											className="text-xs font-mono text-stone-500 hover:underline"
+										>
+											Cancel
+										</button>
+									</div>
+								) : (
+									<button
+										onClick={() => setRemovingPhone(phone.id)}
+										className="text-xs font-mono text-rose-600 hover:underline"
+									>
+										Remove
+									</button>
+								)}
 							</li>
 						))}
 					</ul>
+					)}
+					<p className="text-xs text-stone-500 mb-3">
+						Alerts go to your primary number plus every recipient added here.
+					</p>
 
 					<form onSubmit={handleAddPhone} className="space-y-3">
 						<div className="grid grid-cols-2 gap-3">

@@ -50,9 +50,10 @@ func SendAlertHandler(c *gin.Context) {
 	msg := localizeAlert(user.Language, input.Message)
 	alertSvc := services.NewAlertService(
 		repository.NewAlertRepository(db),
+		repository.NewPhoneRepository(db),
 		c.MustGet("asynq_client").(*asynq.Client),
 	)
-	if err := alertSvc.SendAlert(c.Request.Context(), input.FarmID, user.PhoneNumber, msg); err != nil {
+	if err := alertSvc.SendAlertToRecipients(c.Request.Context(), input.FarmID, userID, user.PhoneNumber, msg); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -82,6 +83,7 @@ func GetAlertHistoryHandler(c *gin.Context) {
 
 	alertSvc := services.NewAlertService(
 		repository.NewAlertRepository(db),
+		repository.NewPhoneRepository(db),
 		c.MustGet("asynq_client").(*asynq.Client),
 	)
 	alerts, err := alertSvc.GetFarmAlerts(c.Request.Context(), farmID)

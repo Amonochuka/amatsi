@@ -82,6 +82,7 @@ func GenerateRecommendationHandler(c *gin.Context) {
 		mqttClient,
 		services.NewAlertService(
 			repository.NewAlertRepository(db),
+			repository.NewPhoneRepository(db),
 			c.MustGet("asynq_client").(*asynq.Client),
 		),
 	)

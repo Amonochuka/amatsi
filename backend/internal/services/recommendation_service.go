@@ -94,9 +94,9 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 				durationMinutes := 45.0
 				_ = s.mqtt.TriggerIrrigation(*farm.DeviceID, durationMinutes)
 			} else {
-				// Standard user -> Send SMS Alert
+				// Standard user -> Send SMS Alert to all recipients
 				msg := "AMATSI Advisor: " + rec.Reason + " Action: " + rec.Action
-				_ = s.alertSvc.SendAlert(ctx, farmID, user.PhoneNumber, msg)
+				_ = s.alertSvc.SendAlertToRecipients(ctx, farmID, user.ID, user.PhoneNumber, msg)
 			}
 		}
 	}
