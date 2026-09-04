@@ -151,8 +151,8 @@ export default function AlertsPage() {
             </div>
           </div>
           <p className="mt-3 text-xs text-stone-500 leading-relaxed">
-            Alerts are generated automatically when the Amatsi advisor determines a farm needs
-            irrigation — never by you sending yourself messages. Only subscribed farmers receive SMS.
+            Amatsi automatically sends an SMS whenever irrigation is recommended for
+            one of your farms.
           </p>
         </div>
       </div>

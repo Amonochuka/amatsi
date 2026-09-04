@@ -403,8 +403,8 @@ export default function SettingsPage() {
 							<span className="font-mono text-stone-900">0.1.0</span>
 						</li>
 						<li>
-							<span className="text-stone-500">Data sources:</span> KijaniBox satellite weather
-							&amp; soil · Africa&apos;s Talking SMS · OpenStreetMap
+							<span className="text-stone-500">Backed by:</span> satellite weather &amp;
+							soil data · smart SMS alerts · location-based mapping
 						</li>
 					</ul>
 				</div>
