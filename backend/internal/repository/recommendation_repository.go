@@ -83,3 +83,20 @@ func (r *RecommendationRepository) GetRecommendationsByFarm(ctx context.Context,
 	}
 	return recs, nil
 }
+
+// CountRecommendationsByUserToday returns how many recommendations were
+// generated today (UTC) across all of the user's farms.
+func (r *RecommendationRepository) CountRecommendationsByUserToday(ctx context.Context, userID string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM recommendations r
+		JOIN farms f ON f.id = r.farm_id
+		WHERE f.user_id = $1
+			AND r.created_at >= timezone('utc'::text, date_trunc('day', timezone('utc'::text, now())))
+	`
+	var count int
+	if err := r.db.QueryRow(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}

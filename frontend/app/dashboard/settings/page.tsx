@@ -11,9 +11,9 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { authAPI, phoneAPI, setSession, getStoredUser, TOKEN_KEY } from "@/lib/api/client";
+import { authAPI, phoneAPI, setSession, getStoredUser, TOKEN_KEY, usageAPI } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
-import type { Language, Theme, UserPhone } from "@/types";
+import type { Language, Theme, Usage, UserPhone } from "@/types";
 
 const LANGUAGE_OPTIONS: Array<{ value: Language; label: string }> = [
 	{ value: "en", label: "English" },
@@ -78,6 +78,16 @@ export default function SettingsPage() {
 
 	// 8.13 — sync preference
 	const [autoSync, setAutoSync] = useState(true);
+
+	// 13.7 — real usage from the backend (/usage)
+	const [usage, setUsage] = useState<Usage | null>(null);
+
+	useEffect(() => {
+		usageAPI
+			.get()
+			.then(setUsage)
+			.catch(() => {});
+	}, []);
 
 	const updateStoredUser = (patch: Partial<typeof user>) => {
 		const current = getStoredUser();
@@ -413,19 +423,25 @@ export default function SettingsPage() {
 					)}
 					</div>
 
-					{/* 17.7 — usage limits */}
+					{/* 17.7 — usage limits (real numbers from /usage) */}
 					<div className="grid grid-cols-2 gap-4 mt-5">
 						<div className="rounded-lg bg-brand-bg p-4">
 							<p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">
 								Recommendations left today
 							</p>
-							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">3 / 5</p>
+							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">
+								{usage
+									? `${Math.max(usage.recommendations_limit - usage.recommendations_used_today, 0)} / ${usage.recommendations_limit}`
+									: "—"}
+							</p>
 						</div>
 						<div className="rounded-lg bg-brand-bg p-4">
 							<p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">
 								SMS credits remaining
 							</p>
-							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">38</p>
+							<p className="font-serif text-2xl font-bold text-stone-900 mt-1">
+								{usage ? usage.sms_balance ?? "unavailable" : "—"}
+							</p>
 						</div>
 					</div>
 				</div>

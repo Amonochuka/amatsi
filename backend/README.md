@@ -95,3 +95,43 @@ re-running them is safe.
 - **Recommendations**: the AI service is treated as an upstream dependency; the
   backend persists each recommendation and queues an SMS when the action is
   `IRRIGATE` (`internal/services/recommendation_service.go`).
+
+## Security model (important — read this)
+
+**Why RLS is not the enforcement layer.** The backend connects to Supabase with
+a service-role connection string (`SUPABASE_DB_URL`), which the Postgres server
+treats as table owner / superuser. **Row Level Security is bypassed for every
+query the Go API runs.** In practice this is the intended design: access control
+happens in Go, not the database —
+
+1. JWTs are self-issued and verified by `JWTAuthMiddleware`.
+2. Every handler checks ownership in Go before returning data, e.g. farms are
+   looked up with `GetFarmByID` then compared to the caller's `userID`, and the
+   phone repository scopes every query: `DELETE ... WHERE id = $1 AND user_id = $2`.
+
+**What the `CREATE POLICY ... USING (auth.uid() = id)` lines are for.** These are
+inert for the Go backend (Supabase populates `auth.uid()` from PostgREST JWTs,
+which we never issue). They are kept on every table as a dormant safety net: the
+schema stays correct if Supabase's PostgREST API
+(`<project>.supabase.co/rest/v1/*`) is ever exposed publicly with the **anon
+key**, which is what RLS actually protects against.
+
+**The real exposure and how it's closed.** Supabase grants the `anon` and
+`authenticated` roles access to the `public` schema by default, and its
+`ALTER DEFAULT PRIVILEGES` grants new tables to those roles too. Without RLS, a
+leaked anon key would let anyone read/write **any** table through PostgREST.
+Since the Go API is the only legitimate client, migration `012_lockdown_postgrest.sql`
+revokes schema + table + sequence + function privileges from `anon` and
+`authenticated`, so PostgREST cannot reach the tables at all. Reset by re-granting:
+
+```sql
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
+```
+
+**Convention for new tables.** Always include the RLS block (enable RLS +
+`DROP POLICY IF EXISTS` + `CREATE POLICY`) from a migration like `011_create_user_phones.sql`,
+even though it does not protect the Go API. It keeps the schema PostgREST-safe
+if the lockdown is ever reverted, and it documents intent.

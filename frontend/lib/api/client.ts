@@ -18,6 +18,7 @@ import type {
 	Recommendation,
 	Alert,
 	UserPhone,
+	Usage,
 } from "@/types";
 
 export const TOKEN_KEY = "amatsi_token";
@@ -158,4 +159,11 @@ export const phoneAPI = {
 	add: (phone: string, label: string) =>
 		apiClient.post<UserPhone>("/phones", { phone_number: phone, label }).then((r) => r.data),
 	remove: (id: string) => apiClient.delete(`/phones/${id}`).then((r) => r.data),
+};
+
+// ---------------------------------------------------------------------------
+// Usage / limits (routes.go: /usage)
+// ---------------------------------------------------------------------------
+export const usageAPI = {
+	get: () => apiClient.get<Usage>("/usage").then((r) => r.data),
 };

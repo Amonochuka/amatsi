@@ -45,6 +45,12 @@ type SMSResponse struct {
 	} `json:"SMSMessageData"`
 }
 
+type BalanceResponse struct {
+	UserData struct {
+		Balance string `json:"balance"`
+	} `json:"UserData"`
+}
+
 func (c *AfricasTalkingClient) SendSMS(ctx context.Context, to, message string) error {
 	data := url.Values{}
 	data.Set("username", c.Username)
@@ -79,4 +85,36 @@ func (c *AfricasTalkingClient) SendSMS(ctx context.Context, to, message string) 
 	}
 
 	return nil
+}
+
+// GetBalance queries Africa's Talking for the account's remaining credit. The
+// response is a display string like "KES 1234.50" (or "KES 0" on a demo tier).
+func (c *AfricasTalkingClient) GetBalance(ctx context.Context) (string, error) {
+	// The user endpoint lives at the same host as messaging, but on /version1/user.
+	base := strings.Replace(c.BaseURL, "/version1/messaging", "/version1/user?username="+url.QueryEscape(c.Username), 1)
+	req, err := http.NewRequestWithContext(ctx, "GET", base, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("apiKey", c.APIKey)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to fetch balance: status %d", resp.StatusCode)
+	}
+
+	var res BalanceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return "", err
+	}
+	if res.UserData.Balance == "" {
+		return "", fmt.Errorf("empty balance in response")
+	}
+	return res.UserData.Balance, nil
 }

@@ -215,6 +215,7 @@ func injectDeps(
 	mqttClient *clients.MQTTClient,
 	cfg *config.AppConfig,
 ) gin.HandlerFunc {
+	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
 	return func(c *gin.Context) {
 		c.Set("db_pool", db)
 		c.Set("redis_client", rdb)
@@ -224,6 +225,8 @@ func injectDeps(
 		c.Set("kijanibox_base_url", cfg.KijaniBoxBaseURL)
 		c.Set("kijanibox_api_key", cfg.KijaniBoxAPIKey)
 		c.Set("ai_service_url", cfg.AIServiceURL)
+		c.Set("at_client", atClient)
+		c.Set("recommendations_daily_limit", cfg.RecommendationsDailyLimit)
 		if mqttClient != nil {
 			c.Set("mqtt_client", mqttClient)
 		}

@@ -157,6 +157,12 @@ export interface UserPhone {
 	created_at: string;
 }
 
+export interface Usage {
+	recommendations_used_today: number;
+	recommendations_limit: number;
+	sms_balance: string | null;
+}
+
 export interface DisplayAlert {
 	id: string;
 	message: string;

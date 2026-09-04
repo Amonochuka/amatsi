@@ -185,3 +185,81 @@ Seen in Settings and the header; user asked what's idle:
 - "Auto-sync when back online" — no backing logic.
 
 The alerts page itself is honest (real status + real SMS history from the DB).
+
+---
+
+## 9. THE DATABASE POOL (`dbpool`) — "I don't get that too"
+
+Every DB query in the app goes through ONE shared object called `dbPool` — a
+PostgreSQL **connection pool**.
+
+### The problem it solves
+Opening a database connection is expensive (network handshake, auth, sometimes
+encryption). Doing it **per request** is slow. Doing it per query is madness.
+A pool is a **growable bucket of already-open connections** that requests borrow
+and return.
+
+```
+request 1 ─┐
+request 2 ─┼─> borrow a connection ──> run query ──> return it to pool
+request 3 ─┘        (from the bucket)                (don't close!)
+```
+
+### Where it's created
+`backend/internal/clients/supabase.go` → `NewSupabasePool(connString)`:
+- `MaxConns = 10` — at most 10 connections open at once. Why? Supabase free/paid
+  tiers cap total connections; staying under the cap avoids "too many connections"
+  errors.
+- `MinConns = 2` — keep 2 always warm so the first request isn't slow.
+- `MaxConnLifetime = 1h` — close and replace connections older than 1h (Postgres /
+  Supabase may recycle them; this avoids stale-connection errors).
+- `MaxConnIdleTime = 30m` — close idle ones after 30min to save resources.
+- Builds the pool, **pings** it to confirm the DB is reachable, else fails fast.
+
+### How it flows through the app
+1. `main.go` creates it once at startup: `dbPool, _ := clients.NewSupabasePool(...)`.
+2. `router.Use(injectDeps(...))` puts it on the **request context**:
+   `c.Set("db_pool", dbPool)`.
+3. Every handler pulls it out: `db := c.MustGet("db_pool").(*pgxpool.Pool)`.
+4. Repositories get it via `repository.NewXxxRepository(db)` and run queries.
+
+### Why a pool instead of one connection
+- **Concurrency**: many users hit the API at once; one connection serializes them.
+- **Failover**: if Supabase drops a connection, pgx silently replaces it.
+- **Performance**: reuse is far cheaper than reconnect-per-request.
+
+---
+
+## 10. RLS & THE SECURITY MODEL — "so my RLS does nothing???"
+
+Short answer: **for the Go backend, correct — it does nothing. That's by design.**
+
+### Why
+The backend connects with the **service-role / table-owner** connection string
+(`SUPABASE_DB_URL`). Postgres treats that as privileged, so **Row Level Security
+is bypassed** for every query Go runs. Supabase's `auth.uid()` is only populated
+by PostgREST (their auto REST API) from JWT headers — we never send Supabase
+JWTs (we make our own in Go).
+
+### So what actually protects the data?
+Go, not the DB:
+1. JWT middleware validates the token on every `/api/*` request.
+2. Handlers check ownership line-by-line, e.g. `farm.UserID != userID → 404`,
+   and repositories scope queries: `DELETE ... WHERE id=$1 AND user_id=$2`.
+
+### Then why keep `CREATE POLICY ... USING (auth.uid() = id)` on every table?
+A **dormant safety net**. If Supabase's PostgREST API
+(`<project>.supabase.co/rest/v1/*`) were ever exposed with the default **anon
+key**, RLS is the thing that gates tables. With policies present, a leaked anon
+key still can't read another farmer's rows. Without them, new tables are open to
+anyone.
+
+### The real gap and the fix (migration 012)
+Supabase grants `anon`/`authenticated` roles broad access to `public.*` and
+`ALTER DEFAULT PRIVILEGES` gives new tables to them too. Since the Go API is the
+only client, `012_lockdown_postgrest.sql` **revokes** schema/table/sequence/function
+access from `anon` and `authenticated`, closing PostgREST entirely. RLS then
+becomes pure future-proofing.
+
+**Convention**: new tables still ship with the RLS block (enable RLS + policy)
+so the schema stays PostgREST-safe if the lockdown is ever reverted.

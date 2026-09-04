@@ -40,6 +40,8 @@ func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client
 		api.POST("/phones", middleware.StrictRateLimitFromEnv(rdb), handlers.AddUserPhoneHandler)
 		api.DELETE("/phones/:id", handlers.DeleteUserPhoneHandler)
 
+		api.GET("/usage", handlers.GetUsageHandler)
+
 		api.PUT("/auth/profile", handlers.UpdateProfileHandler)
 		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), handlers.ChangePasswordHandler)
 	}

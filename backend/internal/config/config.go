@@ -13,6 +13,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,6 +50,9 @@ type AppConfig struct {
 	// Python AI Service
 	AIServiceURL string
 
+	// Plan limits
+	RecommendationsDailyLimit int
+
 	// CORS
 	AllowedOrigins []string
 
@@ -72,6 +76,7 @@ func Load() (*AppConfig, error) {
 		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
 		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
 		RecommendationCron:       getEnvOrDefault("RECOMMENDATION_CRON", "0 6 * * *"),
+		RecommendationsDailyLimit: getIntEnvOrDefault("RECOMMENDATIONS_DAILY_LIMIT", 5),
 
 		// Required (loaded below)
 		SupabaseDBURL:         os.Getenv("SUPABASE_DB_URL"),
@@ -119,6 +124,15 @@ func Load() (*AppConfig, error) {
 func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return defaultValue
+}
+
+func getIntEnvOrDefault(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if n, err := strconv.Atoi(value); err == nil {
+			return n
+		}
 	}
 	return defaultValue
 }
