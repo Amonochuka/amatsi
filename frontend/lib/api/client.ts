@@ -89,6 +89,15 @@ export const authAPI = {
 	signup: (payload: SignupPayload) =>
 		apiClient.post<AuthResponse>("/auth/signup", payload).then((r) => r.data),
 	logout: () => apiClient.post("/auth/logout").then((r) => r.data),
+	updateProfile: (payload: {
+		full_name?: string;
+		phone_number?: string;
+		email?: string;
+		language?: string;
+		sms_enabled?: boolean;
+	}) => apiClient<{ user: AuthUser }>("/auth/profile", { method: "PUT", data: payload }).then((r) => r.data),
+	changePassword: (payload: { current_password: string; new_password: string }) =>
+		apiClient.post<{ status: string }>("/auth/change-password", payload).then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
