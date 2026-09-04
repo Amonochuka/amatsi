@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Bell, Droplet, Loader2, Send, CheckCircle2, Clock, XCircle, Tractor } from "lucide-react";
+import { Bell, Loader2, CheckCircle2, Clock, XCircle, Tractor, ShieldCheck, MessageSquareText } from "lucide-react";
 import { farmAPI, alertAPI } from "@/lib/api/client";
 import type { Farm, Alert } from "@/types";
-import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 
 const STATUS_META: Record<Alert["status"], { label: string; icon: React.ReactNode; cls: string }> = {
   SENT: { label: "Delivered", icon: <CheckCircle2 className="w-4 h-4" />, cls: "text-emerald-700 bg-emerald-50 border-emerald-200/60" },
@@ -22,20 +23,19 @@ const timeAgo = (iso: string) => {
 };
 
 export default function AlertsPage() {
+  const { user } = useAuth();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [farmId, setFarmId] = useState<string>("");
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await farmAPI.list();
-        setFarms(data ?? []);
-        if (data && data.length > 0) setFarmId(data[0].id);
+        const data = (await farmAPI.list()) ?? [];
+        setFarms(data);
+        if (data.length > 0) setFarmId(data[0].id);
         setError(null);
       } catch (err: any) {
         setError(err?.response?.data?.error || err?.message || "Failed to load farms.");
@@ -51,8 +51,8 @@ export default function AlertsPage() {
       return;
     }
     try {
-      const data = await alertAPI.history(id);
-      setAlerts(data ?? []);
+      const data = (await alertAPI.history(id)) ?? [];
+      setAlerts(data);
       setError(null);
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || "Failed to load alerts.");
@@ -63,20 +63,9 @@ export default function AlertsPage() {
     if (farmId) loadAlerts(farmId);
   }, [farmId, loadAlerts]);
 
-  const handleSend = async () => {
-    if (!farmId || !message.trim()) return;
-    setSending(true);
-    setError(null);
-    try {
-      await alertAPI.send(farmId, message.trim());
-      setMessage("");
-      await loadAlerts(farmId);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err?.message || "Failed to send alert.");
-    } finally {
-      setSending(false);
-    }
-  };
+  const delivered = alerts.filter((a) => a.status === "SENT").length;
+  const pending = alerts.filter((a) => a.status === "PENDING").length;
+  const smsEnabled = user?.sms_enabled ?? false;
 
   if (loading) {
     return (
@@ -93,13 +82,16 @@ export default function AlertsPage() {
         <Bell className="w-12 h-12 text-stone-300 mx-auto mb-4" />
         <p className="font-serif text-lg font-bold text-stone-700 mb-2">No farms yet</p>
         <p className="text-sm text-stone-500">
-          Register a farm to manage its SMS alerts and notifications.
+          Register a farm to start receiving automated SMS alerts when irrigation is needed.
         </p>
         <div className="mt-6">
-          <Button onClick={() => (window.location.href = "/dashboard/farms")}>
+          <Link
+            href="/dashboard/farms"
+            className="inline-flex items-center rounded-lg bg-brand-accent text-white font-semibold px-4 py-2.5 text-sm hover:bg-emerald-950 transition-colors"
+          >
             <Tractor className="w-4 h-4 mr-1.5" />
             Add a farm
-          </Button>
+          </Link>
         </div>
       </div>
     );
@@ -110,97 +102,114 @@ export default function AlertsPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold text-stone-900">Alerts</h1>
         <p className="text-xs text-stone-500 mt-1">
-          Send SMS alerts and review your notification history.
+          Amatsi monitors your farms and sends you an SMS when irrigation action is recommended.
         </p>
       </div>
 
-      {/* Farm selector */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6">
-          <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Send an alert</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-stone-600 mb-1.5">Farm</label>
-              <select
-                value={farmId}
-                onChange={(e) => setFarmId(e.target.value)}
-                className="w-full border border-stone-300 rounded-lg py-2 px-3 text-sm bg-white outline-none focus:border-emerald-600"
-              >
-                {farms.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* SMS subscription status */}
+        <div className={`rounded-2xl border p-6 flex flex-col justify-between ${smsEnabled ? "border-emerald-200/60 bg-emerald-50/50" : "border-stone-200/60 bg-brand-card"}`}>
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className={`w-4 h-4 ${smsEnabled ? "text-emerald-700" : "text-stone-400"}`} />
+              <h2 className="font-serif text-xl font-bold text-stone-900">SMS alerts</h2>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-stone-600 mb-1.5">Message</label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={3}
-                placeholder="e.g. Soil moisture is low — water your crops today."
-                className="w-full border border-stone-300 rounded-lg py-2 px-3 text-sm outline-none focus:border-emerald-600"
-              />
+            <div className="mt-3 space-y-1 text-sm">
+              <p className="text-stone-600">
+                Status:{" "}
+                <span className={`font-semibold ${smsEnabled ? "text-emerald-700" : "text-stone-500"}`}>
+                  {smsEnabled ? "Subscribed" : "Off"}
+                </span>
+              </p>
+              <p className="text-stone-600">
+                Delivered to:{" "}
+                <span className="font-mono font-semibold text-stone-900">
+                  {user?.phone_number ?? "—"}
+                </span>
+              </p>
             </div>
-            <Button onClick={handleSend} disabled={sending || !message.trim()}>
-              {sending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                  Sending…
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-1.5" />
-                  Send SMS alert
-                </>
-              )}
-            </Button>
           </div>
+          <Link
+            href="/dashboard/settings"
+            className="mt-4 inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline"
+          >
+            Manage SMS preferences →
+          </Link>
         </div>
 
-        {/* Alert history */}
-        <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6 h-full">
-          <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Alert history</h2>
-          {error && <p className="text-sm text-rose-600 mb-3">{error}</p>}
-          {alerts.length === 0 ? (
-            <div className="text-center py-10 text-stone-400">
-              <Bell className="w-10 h-10 mx-auto mb-3 text-stone-300" />
-              <p className="text-sm">No alerts sent yet for this farm.</p>
+        {/* Summary */}
+        <div className="rounded-2xl border border-stone-200/60 bg-brand-card p-6 lg:col-span-2">
+          <h2 className="font-serif text-xl font-bold text-stone-900 mb-2">What Amatsi has sent you</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg bg-brand-bg p-4">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Delivered</p>
+              <p className="font-serif text-2xl font-bold text-emerald-700 mt-1">{delivered}</p>
             </div>
-          ) : (
-            <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {alerts.map((a) => {
-                const meta = STATUS_META[a.status];
-                return (
-                  <li key={a.id} className="flex items-start gap-3 rounded-xl border border-stone-200/60 p-3">
-                    <span className={`mt-0.5 grid place-items-center w-8 h-8 rounded-lg border ${meta.cls}`}>
-                      {meta.icon}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-stone-900">{a.message}</p>
-                      <p className="text-xs text-stone-500 mt-0.5">{timeAgo(a.created_at)}</p>
-                    </div>
-                    <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${meta.cls}`}>
-                      {meta.label}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            <div className="rounded-lg bg-brand-bg p-4">
+              <p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Pending</p>
+              <p className="font-serif text-2xl font-bold text-amber-700 mt-1">{pending}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-stone-500 leading-relaxed">
+            Alerts are generated automatically when the Amatsi advisor determines a farm needs
+            irrigation — never by you sending yourself messages. Only subscribed farmers receive SMS.
+          </p>
         </div>
       </div>
 
-      <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Droplet className="w-4 h-4 text-emerald-800" />
-          <span className="text-sm font-semibold text-stone-900">Notifications</span>
+      {/* Filter by farm */}
+      <div>
+        <label className="block text-xs font-semibold text-stone-600 mb-1.5">Farm</label>
+        <select
+          value={farmId}
+          onChange={(e) => setFarmId(e.target.value)}
+          className="w-full max-w-xs border border-stone-300 rounded-lg py-2 px-3 text-sm bg-white outline-none focus:border-emerald-600"
+        >
+          {farms.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-4 text-sm text-rose-700">{error}</div>}
+
+      {/* Alert history */}
+      <div className="bg-brand-card border border-stone-200/60 rounded-2xl p-6 h-full">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquareText className="w-4 h-4 text-emerald-800" />
+          <h2 className="font-serif text-xl font-bold text-stone-900">Alert history</h2>
         </div>
-        <p className="text-sm text-stone-500">
-          Alerts are sent via SMS to the phone numbers registered for your account. You can
-          manage SMS recipients and preferences in Settings.
-        </p>
+        {alerts.length === 0 ? (
+          <div className="text-center py-10 text-stone-400">
+            <Bell className="w-10 h-10 mx-auto mb-3 text-stone-300" />
+            <p className="text-sm">
+              No alerts sent for this farm yet. Amatsi will message you automatically when
+              irrigation is recommended.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-3 max-h-96 overflow-y-auto pr-1">
+            {alerts.map((a) => {
+              const meta = STATUS_META[a.status];
+              return (
+                <li key={a.id} className="flex items-start gap-3 rounded-xl border border-stone-200/60 p-3">
+                  <span className={`mt-0.5 grid place-items-center w-8 h-8 rounded-lg border ${meta.cls}`}>
+                    {meta.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-stone-900">{a.message}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{timeAgo(a.created_at)}</p>
+                  </div>
+                  <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${meta.cls}`}>
+                    {meta.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

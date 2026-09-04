@@ -48,14 +48,12 @@ export const mapSoil = (soil: SoilResponse, farm: Farm): SoilMoisture => ({
 	fetchedAt: new Date().toISOString(),
 });
 
-export const mapTankLevel = (farm: Farm): TankLevel => ({
-	farmId: farm.id,
-	currentL: farm.tank_capacity_liters * 0.64,
-	capacityL: farm.tank_capacity_liters,
-	estFullMinutes: 0,
-	inflowRateLPerMin: 0,
-	updatedAt: new Date().toISOString(),
-});
+export const mapTankLevel = (farm: Farm): TankLevel | null => {
+	// No tank telemetry sensor exists yet, so there is no real tank level to
+	// report. Return null so the UI shows an honest "no data" state instead of
+	// a fabricated percentage.
+	return null;
+};
 
 export const mapRecommendation = (r: Recommendation | undefined): DisplayRecommendation | null => {
 	if (!r) return null;
@@ -86,13 +84,8 @@ export const mapAlerts = (alerts: Alert[]): DisplayAlert[] =>
 	}));
 
 export const mapWaterUsage = (farm: Farm): WaterPoint[] => {
-	const now = new Date();
-	return Array.from({ length: 7 }).map((_, i) => {
-		const d = new Date(now);
-		d.setDate(now.getDate() - (6 - i));
-		return {
-			date: d.toISOString().slice(0, 10),
-			liters: Math.round(farm.tank_capacity_liters * 0.9 * (0.6 + (i % 4) * 0.1)),
-		};
-	});
+	// No flow-meter telemetry exists yet, so real water-usage history is not
+	// available. Return empty so the UI shows an honest empty state instead of
+	// fabricated liters.
+	return [];
 };

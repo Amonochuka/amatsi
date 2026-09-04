@@ -46,25 +46,6 @@ const EMPTY: DashboardData = {
 	onSendSMS: null,
 };
 
-// Placeholder farm used only to derive an empty (zeroed) water-usage chart when
-// the user has not registered a farm yet.
-const EMPTY_FARM: Parameters<typeof mapWaterUsage>[0] = {
-	id: "",
-	user_id: "",
-	name: "",
-	device_id: null,
-	latitude: 0,
-	longitude: 0,
-	area_hectares: 0,
-	crop_type: "",
-	soil_type: "",
-	irrigation_method: "",
-	tank_capacity_liters: 0,
-	planting_date: "",
-	created_at: "",
-	updated_at: "",
-};
-
 export function useDashboard(): DashboardData {
 	const [data, setData] = useState<DashboardData>(EMPTY);
 
@@ -88,7 +69,7 @@ export function useDashboard(): DashboardData {
 						soil: [],
 						recommendation: null,
 						alerts: [],
-						waterUsage: mapWaterUsage(EMPTY_FARM),
+						waterUsage: [],
 						tank: null,
 						onSendSMS: null,
 					});
