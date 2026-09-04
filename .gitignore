@@ -27,6 +27,9 @@ dist/
 *.log
 *.tsbuildinfo
 
+# Personal drafts — never commit these
+docs/linkedin-*.md
+
 # Local dev server binary
 backend/amatsi-server
 .vercel
