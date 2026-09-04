@@ -14,14 +14,14 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen w-screen flex items-center justify-center bg-brand-bg">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-brand-bg overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-y-auto">
         <Header user={user} onLogout={logout} />

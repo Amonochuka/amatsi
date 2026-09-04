@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bell, Map, Droplets, CalendarDays, Settings, HelpCircle, User, Plus } from 'lucide-react';
+import { LayoutDashboard, Bell, Map, Droplets, CalendarDays, Settings } from 'lucide-react';
 
 const mainNav = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -21,8 +21,8 @@ export function Sidebar() {
       <div>
         {/* Brand Header */}
         <div className="mb-8 px-2">
-          <h1 className="font-serif text-2xl font-bold text-amber-50">AgriFlow Smart</h1>
-          <p className="text-[11px] text-amber-200/60 font-mono uppercase tracking-wider">Modern Management</p>
+          <h1 className="font-serif text-2xl font-bold text-amber-50">Amatsi</h1>
+          <p className="text-[11px] text-amber-200/60 font-mono uppercase tracking-wider">Smart Irrigation</p>
         </div>
 
         {/* Primary Navigation */}
@@ -46,25 +46,6 @@ export function Sidebar() {
             );
           })}
         </nav>
-      </div>
-
-      {/* Bottom Actions */}
-      <div className="space-y-4">
-        <button className="w-full bg-brand-brightGreen hover:bg-emerald-600 text-slate-950 font-bold text-xs py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-          <Plus className="w-4 h-4 stroke-[3]" />
-          New Field Report
-        </button>
-
-        <div className="pt-2 border-t border-amber-900/40 space-y-1 text-xs">
-          <Link href="/dashboard/support" className="flex items-center gap-3 px-3 py-2 text-amber-200/70 hover:text-white">
-            <HelpCircle className="w-4 h-4" />
-            Support
-          </Link>
-          <Link href="/dashboard/account" className="flex items-center gap-3 px-3 py-2 text-amber-200/70 hover:text-white">
-            <User className="w-4 h-4" />
-            Account
-          </Link>
-        </div>
       </div>
     </aside>
   );

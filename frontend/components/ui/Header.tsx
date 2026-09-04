@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Bell, WifiOff, LogOut } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import type { AuthUser } from '@/types';
 
 interface HeaderProps {
@@ -11,40 +11,29 @@ interface HeaderProps {
 export function Header({ user, onLogout }: HeaderProps) {
   return (
     <header className="h-16 flex items-center justify-between px-8 bg-brand-bg border-b border-stone-200/60">
-      <div className="relative w-80">
-        <Search className="absolute left-3 top-2.5 w-4 h-4 text-stone-400" />
-        <input
-          type="text"
-          placeholder="Search fields..."
-          className="w-full bg-stone-200/50 border-none pl-9 pr-4 py-1.5 rounded-full text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-400"
-        />
-      </div>
+      <span className="font-serif text-lg font-bold text-stone-900">
+        {user?.full_name ? `Karibu, ${user.full_name}` : 'Dashboard'}
+      </span>
 
       <div className="flex items-center gap-4 text-xs">
-        <span className="bg-stone-200/60 text-stone-700 font-mono px-3 py-1 rounded-md">
-          Offline Mode
-        </span>
-        <button className="p-1.5 text-stone-600 hover:text-stone-900">
+        <button className="p-1.5 text-stone-600 hover:text-stone-900" aria-label="Notifications">
           <Bell className="w-4 h-4" />
-        </button>
-        <button className="p-1.5 text-stone-600 hover:text-stone-900">
-          <WifiOff className="w-4 h-4" />
         </button>
         {user && (
           <span className="text-stone-600 max-w-[140px] truncate hidden sm:inline">
-            {user.full_name || user.phone_number}
+            {user.phone_number}
           </span>
         )}
         <button
           onClick={onLogout}
-          className="p-1.5 text-stone-600 hover:text-stone-900"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors"
           aria-label="Log out"
-          title="Log out"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Log out</span>
         </button>
-        <div className="w-8 h-8 rounded-full bg-stone-300 overflow-hidden border border-stone-300">
-          <img src="/images/logo.png" alt="User avatar" className="w-full h-full object-cover" />
+        <div className="w-8 h-8 rounded-full bg-emerald-800 overflow-hidden border border-emerald-900 grid place-items-center text-white font-bold">
+          {user?.full_name?.charAt(0)?.toUpperCase() || user?.phone_number?.charAt(0) || 'A'}
         </div>
       </div>
     </header>

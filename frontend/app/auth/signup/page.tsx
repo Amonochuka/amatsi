@@ -1,20 +1,31 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { LoginForm } from '@/components/auth/LoginForm';
 import { SignupForm } from '@/components/auth/SignupForm';
 
 export default function SignupPage() {
-  const router = useRouter();
+  const [isSignUp, setIsSignUp] = useState(true);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-sm bg-white p-6 rounded-lg shadow-md border border-gray-200">
-        <h1 className="text-xl font-bold mb-1 text-center">Create Account</h1>
-        <p className="text-xs text-muted-foreground mb-6 text-center">
-          Start optimizing your farm&apos;s water usage
-        </p>
-        <SignupForm onSwitchToLogin={() => router.push('/auth/login')} />
+    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden font-sans">
+      {/* 1. Full-screen Full-bleed Background Image */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat scale-105"
+        style={{ backgroundImage: `url('/images/hero-bg.jpeg')` }}
+      />
+
+      {/* 2. Soft Full-screen Overlay to blend text into image */}
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
+
+      {/* 3. Fully Transparent Card Container */}
+      <div className="relative z-10 w-full max-w-sm bg-transparent">
+        {isSignUp ? (
+          <SignupForm onSwitchToLogin={() => setIsSignUp(false)} />
+        ) : (
+          <LoginForm onSwitchToSignup={() => setIsSignUp(true)} />
+        )}
       </div>
-    </div>
+    </main>
   );
 }

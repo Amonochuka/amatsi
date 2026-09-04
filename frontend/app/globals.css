@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand-bg: #F5F1E8;
+  --brand-accent: #16301C;
+}
+
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: var(--brand-bg);
+  color: #1c1917;
 }

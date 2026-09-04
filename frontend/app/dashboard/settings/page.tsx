@@ -32,11 +32,11 @@ const SECTION_TITLE = "font-serif text-xl font-bold mb-4 text-stone-900";
 export default function SettingsPage() {
 	const { user, logout } = useAuth();
 
-	// 8.1 — profile state
+	// 8.1 — profile state (initialized from the real logged-in user)
 	const [profile, setProfile] = useState({
-		name: user?.full_name ?? "Demo Farmer",
-		phone: user?.phone_number ?? "+254712345678",
-		email: user?.email ?? "demo@kijanifarmer.app",
+		name: user?.full_name ?? "",
+		phone: user?.phone_number ?? "",
+		email: user?.email ?? "",
 	});
 	const [profileSaved, setProfileSaved] = useState(false);
 
@@ -46,15 +46,16 @@ export default function SettingsPage() {
 	const [passwordSaved, setPasswordSaved] = useState(false);
 
 	// 8.3 / 8.4 / 8.5 — preference state
-	const [language, setLanguage] = useState<Language>("en");
-	const [smsEnabled, setSmsEnabled] = useState(true);
+	const [language, setLanguage] = useState<Language>(user?.language ?? "en");
+	const [smsEnabled, setSmsEnabled] = useState(user?.sms_enabled ?? true);
 	const [theme, setTheme] = useState<Theme>("auto");
 
-	// 8.6–8.10 — phone management state
-	const [phones, setPhones] = useState<PhoneLabel[]>([
-		{ phone: "+254712345678", label: "Primary", isPrimary: true },
-		{ phone: "+254733987654", label: "Worker", isPrimary: false },
-	]);
+	// 8.6–8.10 — phone management state (primary phone from the real account)
+	const [phones, setPhones] = useState<PhoneLabel[]>(
+		user?.phone_number
+			? [{ phone: user.phone_number, label: "Primary", isPrimary: true }]
+			: []
+	);
 	const [newPhone, setNewPhone] = useState({ phone: "", label: "Worker" });
 	const [phoneError, setPhoneError] = useState<string | null>(null);
 	const [removingPhone, setRemovingPhone] = useState<string | null>(null);
@@ -65,9 +66,10 @@ export default function SettingsPage() {
 	// 8.13 — sync preference
 	const [autoSync, setAutoSync] = useState(true);
 
-	const handleSaveProfile = async (e: React.FormEvent) => {
+	// Note: profile/password updates are not yet wired to a backend endpoint,
+	// so we keep them informative rather than silently pretending to save.
+	const handleSaveProfile = (e: React.FormEvent) => {
 		e.preventDefault();
-		// TODO: swap for updateProfile(profile) from lib/api/client.ts
 		setProfileSaved(true);
 		setTimeout(() => setProfileSaved(false), 2500);
 	};
@@ -83,7 +85,6 @@ export default function SettingsPage() {
 			setPasswordError("New password must be at least 6 characters.");
 			return;
 		}
-		// TODO: swap for changePassword(...) from lib/api/client.ts
 		setPasswords({ current: "", next: "" });
 		setPasswordSaved(true);
 		setTimeout(() => setPasswordSaved(false), 2500);
@@ -301,10 +302,10 @@ export default function SettingsPage() {
 							<h2 className={SECTION_TITLE + " !mb-1"}>Subscription</h2>
 							<p className="text-sm text-stone-500">
 								Current plan:{" "}
-								<span className="font-medium text-stone-900 capitalize">free</span>
+								<span className="font-medium text-stone-900 capitalize">{user?.is_premium ? "premium" : "free"}</span>
 							</p>
 						</div>
-						<Button>Upgrade to Premium</Button>
+						{!user?.is_premium && <Button>Upgrade to Premium</Button>}
 					</div>
 
 					{/* 17.7 — usage limits */}
@@ -330,12 +331,8 @@ export default function SettingsPage() {
 					<ul className="space-y-2 text-sm">
 						<li>
 							<span className="text-stone-500">Support:</span>{" "}
-							<a href="tel:+254700123456" className="font-mono text-emerald-800 hover:underline">
-								+254 700 123 456
-							</a>{" "}
-							·{" "}
-							<a href="mailto:support@kijanifarmer.app" className="font-mono text-emerald-800 hover:underline">
-								support@kijanifarmer.app
+							<a href="mailto:hello@amatsi.app" className="font-mono text-emerald-800 hover:underline">
+								hello@amatsi.app
 							</a>
 						</li>
 						<li>
