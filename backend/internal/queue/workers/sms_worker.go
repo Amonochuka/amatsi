@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hibiken/asynq"
-	"github.com/kijanifarmer/backend/internal/clients"
-	"github.com/kijanifarmer/backend/internal/queue"
-	"github.com/kijanifarmer/backend/internal/repository"
+	"github.com/amatsi/backend/internal/clients"
+	"github.com/amatsi/backend/internal/queue"
+	"github.com/amatsi/backend/internal/repository"
 )
 
 type SMSProcessor struct {

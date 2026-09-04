@@ -2,9 +2,9 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kijanifarmer/backend/internal/api/handlers"
-	"github.com/kijanifarmer/backend/internal/api/middleware"
-	"github.com/kijanifarmer/backend/internal/config"
+	"github.com/amatsi/backend/internal/api/handlers"
+	"github.com/amatsi/backend/internal/api/middleware"
+	"github.com/amatsi/backend/internal/config"
 )
 
 func RegisterAuthRoutes(router *gin.Engine, cfg *config.AppConfig) {

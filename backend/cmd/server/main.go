@@ -22,15 +22,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
-	backend "github.com/kijanifarmer/backend"
-	"github.com/kijanifarmer/backend/internal/api/middleware"
-	"github.com/kijanifarmer/backend/internal/api/routes"
-	"github.com/kijanifarmer/backend/internal/clients"
-	"github.com/kijanifarmer/backend/internal/config"
-	"github.com/kijanifarmer/backend/internal/migrations"
-	"github.com/kijanifarmer/backend/internal/queue"
-	"github.com/kijanifarmer/backend/internal/queue/workers"
-	"github.com/kijanifarmer/backend/internal/repository"
+	backend "github.com/amatsi/backend"
+	"github.com/amatsi/backend/internal/api/middleware"
+	"github.com/amatsi/backend/internal/api/routes"
+	"github.com/amatsi/backend/internal/clients"
+	"github.com/amatsi/backend/internal/config"
+	"github.com/amatsi/backend/internal/migrations"
+	"github.com/amatsi/backend/internal/queue"
+	"github.com/amatsi/backend/internal/queue/workers"
+	"github.com/amatsi/backend/internal/repository"
 )
 
 func main() {

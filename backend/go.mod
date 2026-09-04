@@ -1,4 +1,4 @@
-module github.com/kijanifarmer/backend
+module github.com/amatsi/backend
 
 go 1.25.0
 

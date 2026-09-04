@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kijanifarmer/backend/internal/api/middleware"
-	"github.com/kijanifarmer/backend/internal/models"
-	"github.com/kijanifarmer/backend/internal/repository"
+	"github.com/amatsi/backend/internal/api/middleware"
+	"github.com/amatsi/backend/internal/models"
+	"github.com/amatsi/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

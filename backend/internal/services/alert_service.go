@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"github.com/hibiken/asynq"
-	"github.com/kijanifarmer/backend/internal/models"
-	"github.com/kijanifarmer/backend/internal/queue"
-	"github.com/kijanifarmer/backend/internal/repository"
+	"github.com/amatsi/backend/internal/models"
+	"github.com/amatsi/backend/internal/queue"
+	"github.com/amatsi/backend/internal/repository"
 )
 
 type AlertService struct {

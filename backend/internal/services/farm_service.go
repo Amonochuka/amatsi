@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"github.com/kijanifarmer/backend/internal/models"
-	"github.com/kijanifarmer/backend/internal/repository"
+	"github.com/amatsi/backend/internal/models"
+	"github.com/amatsi/backend/internal/repository"
 )
 
 type FarmService struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kijanifarmer/backend/internal/models"
+	"github.com/amatsi/backend/internal/models"
 )
 
 type UserRepository struct {
