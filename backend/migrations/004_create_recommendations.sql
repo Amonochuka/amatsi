@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS public.recommendations (
 
 ALTER TABLE public.recommendations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view recommendations for own farms" 
-    ON public.recommendations FOR SELECT 
+DROP POLICY IF EXISTS "Users can view recommendations for own farms" ON public.recommendations;
+CREATE POLICY "Users can view recommendations for own farms"
+    ON public.recommendations FOR SELECT
     USING (EXISTS (
         SELECT 1 FROM public.farms WHERE farms.id = recommendations.farm_id AND farms.user_id = auth.uid()
     ));

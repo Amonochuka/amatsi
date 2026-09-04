@@ -10,8 +10,9 @@ CREATE TABLE IF NOT EXISTS public.weather (
 
 ALTER TABLE public.weather ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view weather for own farms" 
-    ON public.weather FOR SELECT 
+DROP POLICY IF EXISTS "Users can view weather for own farms" ON public.weather;
+CREATE POLICY "Users can view weather for own farms"
+    ON public.weather FOR SELECT
     USING (EXISTS (
         SELECT 1 FROM public.farms WHERE farms.id = weather.farm_id AND farms.user_id = auth.uid()
     ));

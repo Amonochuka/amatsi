@@ -16,18 +16,22 @@ CREATE TABLE IF NOT EXISTS public.farms (
 
 ALTER TABLE public.farms ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own farms" 
-    ON public.farms FOR SELECT 
+DROP POLICY IF EXISTS "Users can view own farms" ON public.farms;
+CREATE POLICY "Users can view own farms"
+    ON public.farms FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own farms" 
-    ON public.farms FOR INSERT 
+DROP POLICY IF EXISTS "Users can insert own farms" ON public.farms;
+CREATE POLICY "Users can insert own farms"
+    ON public.farms FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own farms" 
-    ON public.farms FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update own farms" ON public.farms;
+CREATE POLICY "Users can update own farms"
+    ON public.farms FOR UPDATE
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own farms" 
-    ON public.farms FOR DELETE 
+DROP POLICY IF EXISTS "Users can delete own farms" ON public.farms;
+CREATE POLICY "Users can delete own farms"
+    ON public.farms FOR DELETE
     USING (auth.uid() = user_id);

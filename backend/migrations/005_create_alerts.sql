@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS public.alerts (
 
 ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view alerts for own farms" 
-    ON public.alerts FOR SELECT 
+DROP POLICY IF EXISTS "Users can view alerts for own farms" ON public.alerts;
+CREATE POLICY "Users can view alerts for own farms"
+    ON public.alerts FOR SELECT
     USING (EXISTS (
         SELECT 1 FROM public.farms WHERE farms.id = alerts.farm_id AND farms.user_id = auth.uid()
     ));
