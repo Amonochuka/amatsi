@@ -26,6 +26,9 @@ func GetFarmsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if farms == nil {
+		farms = []*models.Farm{}
+	}
 	c.JSON(http.StatusOK, farms)
 }
 

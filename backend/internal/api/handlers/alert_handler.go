@@ -7,6 +7,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/amatsi/backend/internal/api/middleware"
+	"github.com/amatsi/backend/internal/models"
 	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
 )
@@ -87,6 +88,9 @@ func GetAlertHistoryHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if alerts == nil {
+		alerts = []*models.Alert{}
 	}
 	c.JSON(http.StatusOK, alerts)
 }

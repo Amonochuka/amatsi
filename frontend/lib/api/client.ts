@@ -104,7 +104,7 @@ export const authAPI = {
 // Farm Management endpoints (routes/farms.go)
 // ---------------------------------------------------------------------------
 export const farmAPI = {
-	list: () => apiClient.get<Farm[]>("/farms").then((r) => r.data),
+	list: () => apiClient.get<Farm[]>("/farms").then((r) => r.data ?? []),
 	create: (payload: CreateFarmPayload) =>
 		apiClient.post<Farm>("/farms", payload).then((r) => r.data),
 	get: (farmId: string) =>
@@ -132,7 +132,7 @@ export const soilAPI = {
 // ---------------------------------------------------------------------------
 export const recommendationAPI = {
 	history: (farmId: string) =>
-		apiClient.get<Recommendation[]>(`/recommendations/${farmId}`).then((r) => r.data),
+		apiClient.get<Recommendation[]>(`/recommendations/${farmId}`).then((r) => r.data ?? []),
 };
 
 // ---------------------------------------------------------------------------
@@ -146,5 +146,5 @@ export const alertAPI = {
 	history: (farmId: string) =>
 		apiClient
 			.get<Alert[]>("/alerts/history", { params: { farm_id: farmId } })
-			.then((r) => r.data),
+			.then((r) => r.data ?? []),
 };
