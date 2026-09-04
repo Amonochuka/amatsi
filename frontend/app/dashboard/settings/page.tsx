@@ -368,7 +368,14 @@ export default function SettingsPage() {
 								<span className="font-medium text-stone-900 capitalize">{user?.is_premium ? "premium" : "free"}</span>
 							</p>
 						</div>
-						{!user?.is_premium && <Button>Upgrade to Premium</Button>}
+						{!user?.is_premium && (
+						<a
+							href="mailto:hello@amatsi.app?subject=Upgrade%20to%20Premium"
+							className="inline-flex items-center justify-center rounded-lg bg-brand-accent text-white font-semibold px-4 py-2.5 text-sm hover:bg-emerald-950 transition-colors shadow-sm"
+						>
+							Upgrade to Premium
+						</a>
+					)}
 					</div>
 
 					{/* 17.7 — usage limits */}

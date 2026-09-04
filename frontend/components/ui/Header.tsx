@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Bell, LogOut } from 'lucide-react';
 import type { AuthUser } from '@/types';
 
@@ -16,9 +17,13 @@ export function Header({ user, onLogout }: HeaderProps) {
       </span>
 
       <div className="flex items-center gap-4 text-xs">
-        <button className="p-1.5 text-stone-600 hover:text-stone-900" aria-label="Notifications">
+        <Link
+          href="/dashboard/alerts"
+          className="p-1.5 text-stone-600 hover:text-stone-900"
+          aria-label="View alerts"
+        >
           <Bell className="w-4 h-4" />
-        </button>
+        </Link>
         {user && (
           <span className="text-stone-600 max-w-[140px] truncate hidden sm:inline">
             {user.phone_number}
