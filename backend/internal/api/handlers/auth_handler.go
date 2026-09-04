@@ -121,6 +121,110 @@ func LogoutHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "logged_out"})
 }
 
+func UpdateProfileHandler(c *gin.Context) {
+	userID, ok := middleware.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var input struct {
+		FullName    *string `json:"full_name"`
+		PhoneNumber *string `json:"phone_number"`
+		Email       *string `json:"email"`
+		Language    *string `json:"language"`
+		SMSEnabled  *bool   `json:"sms_enabled"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := c.MustGet("db_pool").(*pgxpool.Pool)
+	repo := repository.NewUserRepository(db)
+	user, err := repo.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if input.FullName != nil {
+		user.FullName = strings.TrimSpace(*input.FullName)
+	}
+	if input.PhoneNumber != nil {
+		newPhone := strings.TrimSpace(*input.PhoneNumber)
+		if newPhone != user.PhoneNumber {
+			if existing, err := repo.GetUserByPhone(c.Request.Context(), newPhone); err == nil && existing != nil {
+				c.JSON(http.StatusConflict, gin.H{"error": "phone number already in use"})
+				return
+			} else if err != nil && err != pgx.ErrNoRows {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "phone lookup failed"})
+				return
+			}
+			user.PhoneNumber = newPhone
+		}
+	}
+	if input.Email != nil {
+		user.Email = strings.TrimSpace(*input.Email)
+	}
+	if input.Language != nil {
+		user.Language = *input.Language
+	}
+	if input.SMSEnabled != nil {
+		user.SMSEnabled = *input.SMSEnabled
+	}
+
+	if err := repo.UpdateUserProfile(c.Request.Context(), user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+func ChangePasswordHandler(c *gin.Context) {
+	userID, ok := middleware.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var input struct {
+		CurrentPassword string `json:"current_password" binding:"required"`
+		NewPassword     string `json:"new_password" binding:"required,min=8"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := c.MustGet("db_pool").(*pgxpool.Pool)
+	repo := repository.NewUserRepository(db)
+	user, err := repo.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.CurrentPassword)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "current password is incorrect"})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash new password"})
+		return
+	}
+
+	if err := repo.UpdatePasswordHash(c.Request.Context(), userID, string(hash)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "password_updated"})
+}
+
 func issueJWT(c *gin.Context, userID string) (string, error) {
 	secret := c.MustGet("jwt_secret").(string)
 	ttl := c.MustGet("jwt_ttl").(time.Duration)

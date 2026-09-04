@@ -35,5 +35,8 @@ func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client
 
 		api.POST("/alerts/send", middleware.StrictRateLimitFromEnv(rdb), handlers.SendAlertHandler)
 		api.GET("/alerts/history", handlers.GetAlertHistoryHandler)
+
+		api.PUT("/auth/profile", handlers.UpdateProfileHandler)
+		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), handlers.ChangePasswordHandler)
 	}
 }

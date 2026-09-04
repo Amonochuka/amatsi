@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/amatsi/backend/internal/models"
 )
@@ -65,6 +66,45 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*mod
 		return nil, err
 	}
 	return user, nil
+}
+
+func (r *UserRepository) UpdateUserProfile(ctx context.Context, user *models.User) error {
+	query := `
+		UPDATE users
+		SET full_name   = $2,
+		    phone_number = $3,
+		    email       = NULLIF($4, ''),
+		    language    = $5,
+		    sms_enabled = $6,
+		    updated_at  = timezone('utc'::text, now())
+		WHERE id = $1
+		RETURNING updated_at
+	`
+	return r.db.QueryRow(ctx, query,
+		user.ID,
+		user.FullName,
+		user.PhoneNumber,
+		user.Email,
+		user.Language,
+		user.SMSEnabled,
+	).Scan(&user.UpdatedAt)
+}
+
+func (r *UserRepository) UpdatePasswordHash(ctx context.Context, userID, passwordHash string) error {
+	query := `
+		UPDATE users
+		SET password_hash = $2,
+		    updated_at   = timezone('utc'::text, now())
+		WHERE id = $1
+	`
+	tag, err := r.db.Exec(ctx, query, userID, passwordHash)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) error {
