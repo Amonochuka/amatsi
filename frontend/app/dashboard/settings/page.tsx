@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { authAPI, setSession, getStoredUser, TOKEN_KEY } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
 import type { Language, PhoneLabel, Theme } from "@/types";
 
@@ -30,25 +31,31 @@ const SECTION_CLASSES = "rounded-2xl border border-stone-200/60 bg-brand-card p-
 const SECTION_TITLE = "font-serif text-xl font-bold mb-4 text-stone-900";
 
 export default function SettingsPage() {
-	const { user, logout } = useAuth();
 
 	// 8.1 — profile state (initialized from the real logged-in user)
+	const { user, logout, refreshProfile } = useAuth();
+	const [profileSaving, setProfileSaving] = useState(false);
+
 	const [profile, setProfile] = useState({
 		name: user?.full_name ?? "",
 		phone: user?.phone_number ?? "",
 		email: user?.email ?? "",
 	});
 	const [profileSaved, setProfileSaved] = useState(false);
+	const [profileError, setProfileError] = useState<string | null>(null);
 
 	// 8.2 — change password state
 	const [passwords, setPasswords] = useState({ current: "", next: "" });
 	const [passwordError, setPasswordError] = useState<string | null>(null);
 	const [passwordSaved, setPasswordSaved] = useState(false);
+	const [passwordSaving, setPasswordSaving] = useState(false);
 
 	// 8.3 / 8.4 / 8.5 — preference state
 	const [language, setLanguage] = useState<Language>(user?.language ?? "en");
 	const [smsEnabled, setSmsEnabled] = useState(user?.sms_enabled ?? true);
 	const [theme, setTheme] = useState<Theme>("auto");
+	const [prefsSaving, setPrefsSaving] = useState(false);
+	const [prefsSaved, setPrefsSaved] = useState(false);
 
 	// 8.6–8.10 — phone management state (primary phone from the real account)
 	const [phones, setPhones] = useState<PhoneLabel[]>(
@@ -66,12 +73,33 @@ export default function SettingsPage() {
 	// 8.13 — sync preference
 	const [autoSync, setAutoSync] = useState(true);
 
-	// Note: profile/password updates are not yet wired to a backend endpoint,
-	// so we keep them informative rather than silently pretending to save.
-	const handleSaveProfile = (e: React.FormEvent) => {
+	const updateStoredUser = (patch: Partial<typeof user>) => {
+		const current = getStoredUser();
+		if (current) {
+			setSession(localStorage.getItem(TOKEN_KEY)!, { ...current, ...patch } as any);
+		}
+	};
+
+	const handleSaveProfile = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setProfileSaved(true);
-		setTimeout(() => setProfileSaved(false), 2500);
+		setProfileError(null);
+		setProfileSaving(true);
+		try {
+			const { user: updated } = await authAPI.updateProfile({
+				full_name: profile.name,
+				phone_number: profile.phone,
+				email: profile.email,
+			});
+			refreshProfile(updated);
+			updateStoredUser(updated);
+			setProfileSaved(true);
+			setTimeout(() => setProfileSaved(false), 2500);
+		} catch (err: any) {
+			const msg = err?.response?.data?.error || "Failed to save profile.";
+			setProfileError(msg);
+		} finally {
+			setProfileSaving(false);
+		}
 	};
 
 	const handleChangePassword = async (e: React.FormEvent) => {
@@ -81,13 +109,43 @@ export default function SettingsPage() {
 			setPasswordError("Fill in both fields.");
 			return;
 		}
-		if (passwords.next.length < 6) {
-			setPasswordError("New password must be at least 6 characters.");
+		if (passwords.next.length < 8) {
+			setPasswordError("New password must be at least 8 characters.");
 			return;
 		}
-		setPasswords({ current: "", next: "" });
-		setPasswordSaved(true);
-		setTimeout(() => setPasswordSaved(false), 2500);
+		setPasswordSaving(true);
+		try {
+			await authAPI.changePassword({
+				current_password: passwords.current,
+				new_password: passwords.next,
+			});
+			setPasswords({ current: "", next: "" });
+			setPasswordSaved(true);
+			setTimeout(() => setPasswordSaved(false), 2500);
+		} catch (err: any) {
+			const msg = err?.response?.data?.error || "Failed to change password.";
+			setPasswordError(msg);
+		} finally {
+			setPasswordSaving(false);
+		}
+	};
+
+	const handleSavePreferences = async () => {
+		setPrefsSaving(true);
+		try {
+			const { user: updated } = await authAPI.updateProfile({
+				language,
+				sms_enabled: smsEnabled,
+			});
+			refreshProfile(updated);
+			updateStoredUser(updated);
+			setPrefsSaved(true);
+			setTimeout(() => setPrefsSaved(false), 2500);
+		} catch {
+			// silently ignore — preferences are non-critical
+		} finally {
+			setPrefsSaving(false);
+		}
 	};
 
 	// 8.7 — add an additional recipient.
@@ -134,9 +192,10 @@ export default function SettingsPage() {
 							onChange={(e) => setProfile({ ...profile, email: e.target.value })}
 						/>
 					</div>
-					<Button type="submit" className="mt-4">
-						Save profile
+					<Button type="submit" className="mt-4" disabled={profileSaving}>
+						{profileSaving ? "Saving..." : "Save profile"}
 					</Button>
+					{profileError && <p className="mt-2 text-sm text-rose-600">{profileError}</p>}
 					{profileSaved && (
 						<p className="mt-2 text-sm text-emerald-700">Profile saved.</p>
 					)}
@@ -164,8 +223,8 @@ export default function SettingsPage() {
 					</div>
 					{passwordError && <p className="mt-2 text-sm text-rose-600">{passwordError}</p>}
 					{passwordSaved && <p className="mt-2 text-sm text-emerald-700">Password updated.</p>}
-					<Button type="submit" variant="outline" className="mt-4">
-						Update password
+					<Button type="submit" variant="outline" className="mt-4" disabled={passwordSaving}>
+						{passwordSaving ? "Updating..." : "Update password"}
 					</Button>
 				</form>
 
@@ -215,6 +274,10 @@ export default function SettingsPage() {
 							/>
 						</label>
 					</div>
+					<Button variant="outline" className="mt-4" onClick={handleSavePreferences} disabled={prefsSaving}>
+						{prefsSaving ? "Saving..." : "Save preferences"}
+					</Button>
+					{prefsSaved && <p className="mt-2 text-sm text-emerald-700">Preferences saved.</p>}
 				</div>
 
 				{/* 8.6–8.10 — phone number management */}
