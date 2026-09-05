@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/amatsi/backend/internal/repository"
+
 	"github.com/amatsi/backend/internal/services"
 )
 
@@ -18,7 +17,15 @@ import (
 // with fields including "from" (the replying number) and "text". It sits
 // outside the JWT-authenticated API group because Africa's Talking cannot
 // present our token.
-func SMSInboundHandler(c *gin.Context) {
+type SMSInboundHandler struct {
+	optoutSvc *services.OptOutService
+}
+
+func NewSMSInboundHandler(optoutSvc *services.OptOutService) *SMSInboundHandler {
+	return &SMSInboundHandler{optoutSvc: optoutSvc}
+}
+
+func (h *SMSInboundHandler) Inbound(c *gin.Context) {
 	from := c.PostForm("from")
 	if from == "" {
 		from = c.Query("from")
@@ -33,12 +40,7 @@ func SMSInboundHandler(c *gin.Context) {
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	svc := services.NewOptOutService(
-		repository.NewUserRepository(db),
-		repository.NewPhoneRepository(db),
-	)
-	result := svc.HandleInbound(c.Request.Context(), from, text)
+	result := h.optoutSvc.HandleInbound(c.Request.Context(), from, text)
 
 	status := "ignored"
 	if result.Action != "" {

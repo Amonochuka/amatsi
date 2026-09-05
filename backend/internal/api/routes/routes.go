@@ -27,37 +27,57 @@ func RegisterRoutes(
 	atClient *clients.AfricasTalkingClient,
 ) {
 	// --- Repositories -----------------------------------------------------
-	recRepo := repository.NewRecommendationRepository(db)
+	userRepo := repository.NewUserRepository(db)
 	farmRepo := repository.NewFarmRepository(db)
-	weatherRepo := repository.NewWeatherRepository(db)
 	phoneRepo := repository.NewPhoneRepository(db)
+	alertRepo := repository.NewAlertRepository(db)
+	recRepo := repository.NewRecommendationRepository(db)
+	weatherRepo := repository.NewWeatherRepository(db)
 
 	// --- Clients ----------------------------------------------------------
 	kijani := clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey)
+	ai := clients.NewPythonAIClient(cfg.AIServiceURL)
 
 	// --- Services ---------------------------------------------------------
 	authSvc := services.NewAuthService(
-		repository.NewUserRepository(db),
+		userRepo,
 		rdb,
 		cfg.JWTSecret,
 		cfg.JWTTokenTTL,
 		cfg.JWTRefreshTokenTTL,
 	)
+	farmSvc := services.NewFarmService(farmRepo)
 	phoneSvc := services.NewPhoneService(phoneRepo)
 	weatherSvc := services.NewWeatherService(farmRepo, weatherRepo, kijani, rdb)
+	alertSvc := services.NewAlertService(alertRepo, phoneRepo, asynqClient)
+	recSvc := services.NewRecommendationService(
+		recRepo,
+		weatherRepo,
+		farmRepo,
+		userRepo,
+		kijani,
+		ai,
+		mqttClient,
+		alertSvc,
+	)
 	usageSvc := services.NewUsageService(recRepo, atClient, cfg.RecommendationsDailyLimit)
+	optoutSvc := services.NewOptOutService(userRepo, phoneRepo)
 
 	// --- Handlers ---------------------------------------------------------
 	authHandler := handlers.NewAuthHandler(authSvc)
+	farmHandler := handlers.NewFarmHandler(farmSvc)
 	phoneHandler := handlers.NewPhoneHandler(phoneSvc)
 	weatherHandler := handlers.NewWeatherHandler(weatherSvc)
 	usageHandler := handlers.NewUsageHandler(usageSvc)
+	alertHandler := handlers.NewAlertHandler(farmRepo, userRepo, alertSvc)
+	recommendationHandler := handlers.NewRecommendationHandler(farmRepo, recRepo, recSvc)
+	smsInboundHandler := handlers.NewSMSInboundHandler(optoutSvc)
 
 	// Public SMS webhook for inbound replies (STOP/START opt-out). Africa's
 	// Talking calls this without a JWT, so it is registered outside the
 	// authenticated /api group.
-	router.GET("/api/sms/inbound", handlers.SMSInboundHandler)
-	router.POST("/api/sms/inbound", handlers.SMSInboundHandler)
+	router.GET("/api/sms/inbound", smsInboundHandler.Inbound)
+	router.POST("/api/sms/inbound", smsInboundHandler.Inbound)
 
 	auth := router.Group("/api/auth")
 	auth.Use(middleware.RateLimitFromEnv(rdb))
@@ -72,20 +92,20 @@ func RegisterRoutes(
 	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret, rdb))
 	api.Use(middleware.RateLimitFromEnv(rdb))
 	{
-		api.GET("/farms", handlers.GetFarmsHandler)
-		api.POST("/farms", handlers.CreateFarmHandler)
-		api.GET("/farms/:id", handlers.GetFarmHandler)
-		api.PUT("/farms/:id", handlers.UpdateFarmHandler)
-		api.DELETE("/farms/:id", handlers.DeleteFarmHandler)
+		api.GET("/farms", farmHandler.GetFarms)
+		api.POST("/farms", farmHandler.CreateFarm)
+		api.GET("/farms/:id", farmHandler.GetFarm)
+		api.PUT("/farms/:id", farmHandler.UpdateFarm)
+		api.DELETE("/farms/:id", farmHandler.DeleteFarm)
 
 		api.GET("/weather/:farmId", weatherHandler.GetWeather)
 		api.GET("/soil/:farmId", weatherHandler.GetSoilMoisture)
 
-		api.GET("/recommendations/:farmId", handlers.GetRecommendationsHandler)
-		api.POST("/recommendations/generate", middleware.StrictRateLimitFromEnv(rdb), handlers.GenerateRecommendationHandler)
+		api.GET("/recommendations/:farmId", recommendationHandler.GetRecommendations)
+		api.POST("/recommendations/generate", middleware.StrictRateLimitFromEnv(rdb), recommendationHandler.Generate)
 
-		api.POST("/alerts/send", middleware.StrictRateLimitFromEnv(rdb), handlers.SendAlertHandler)
-		api.GET("/alerts/history", handlers.GetAlertHistoryHandler)
+		api.POST("/alerts/send", middleware.StrictRateLimitFromEnv(rdb), alertHandler.SendAlert)
+		api.GET("/alerts/history", alertHandler.GetAlertHistory)
 
 		api.GET("/phones", phoneHandler.GetPhones)
 		api.POST("/phones", middleware.StrictRateLimitFromEnv(rdb), phoneHandler.AddPhone)

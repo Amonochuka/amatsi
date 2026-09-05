@@ -4,15 +4,33 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
-	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/amatsi/backend/internal/api/middleware"
 	"github.com/amatsi/backend/internal/models"
 	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
 )
 
-func SendAlertHandler(c *gin.Context) {
+// AlertHandler serves the /api/alerts routes.
+type AlertHandler struct {
+	farmRepo *repository.FarmRepository
+	userRepo *repository.UserRepository
+	alertSvc *services.AlertService
+}
+
+func NewAlertHandler(
+	farmRepo *repository.FarmRepository,
+	userRepo *repository.UserRepository,
+	alertSvc *services.AlertService,
+) *AlertHandler {
+	return &AlertHandler{
+		farmRepo: farmRepo,
+		userRepo: userRepo,
+		alertSvc: alertSvc,
+	}
+}
+
+func (h *AlertHandler) SendAlert(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -28,16 +46,13 @@ func SendAlertHandler(c *gin.Context) {
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	farmRepo := repository.NewFarmRepository(db)
-	farm, err := farmRepo.GetFarmByID(c.Request.Context(), input.FarmID)
+	farm, err := h.farmRepo.GetFarmByID(c.Request.Context(), input.FarmID)
 	if err != nil || farm.UserID != userID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "farm not found"})
 		return
 	}
 
-	userRepo := repository.NewUserRepository(db)
-	user, err := userRepo.GetUserByID(c.Request.Context(), userID)
+	user, err := h.userRepo.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "user lookup failed"})
 		return
@@ -48,19 +63,14 @@ func SendAlertHandler(c *gin.Context) {
 	}
 
 	msg := localizeAlert(user.Language, input.Message)
-	alertSvc := services.NewAlertService(
-		repository.NewAlertRepository(db),
-		repository.NewPhoneRepository(db),
-		c.MustGet("asynq_client").(*asynq.Client),
-	)
-	if err := alertSvc.SendAlertToRecipients(c.Request.Context(), input.FarmID, userID, user.PhoneNumber, msg); err != nil {
+	if err := h.alertSvc.SendAlertToRecipients(c.Request.Context(), input.FarmID, userID, user.PhoneNumber, msg); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "queued"})
 }
 
-func GetAlertHistoryHandler(c *gin.Context) {
+func (h *AlertHandler) GetAlertHistory(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -73,20 +83,13 @@ func GetAlertHistoryHandler(c *gin.Context) {
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	farmRepo := repository.NewFarmRepository(db)
-	farm, err := farmRepo.GetFarmByID(c.Request.Context(), farmID)
+	farm, err := h.farmRepo.GetFarmByID(c.Request.Context(), farmID)
 	if err != nil || farm.UserID != userID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "farm not found"})
 		return
 	}
 
-	alertSvc := services.NewAlertService(
-		repository.NewAlertRepository(db),
-		repository.NewPhoneRepository(db),
-		c.MustGet("asynq_client").(*asynq.Client),
-	)
-	alerts, err := alertSvc.GetFarmAlerts(c.Request.Context(), farmID)
+	alerts, err := h.alertSvc.GetFarmAlerts(c.Request.Context(), farmID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

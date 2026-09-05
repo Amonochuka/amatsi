@@ -6,22 +6,29 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/amatsi/backend/internal/api/middleware"
 	"github.com/amatsi/backend/internal/models"
-	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
 )
 
-func GetFarmsHandler(c *gin.Context) {
+// FarmHandler serves the /api/farms routes.
+type FarmHandler struct {
+	svc *services.FarmService
+}
+
+func NewFarmHandler(svc *services.FarmService) *FarmHandler {
+	return &FarmHandler{svc: svc}
+}
+
+func (h *FarmHandler) GetFarms(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	farmSvc := services.NewFarmService(repository.NewFarmRepository(db))
-	farms, err := farmSvc.GetFarmerFarms(c.Request.Context(), userID)
+
+	farms, err := h.svc.GetFarmerFarms(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -32,16 +39,15 @@ func GetFarmsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, farms)
 }
 
-func GetFarmHandler(c *gin.Context) {
+func (h *FarmHandler) GetFarm(c *gin.Context) {
 	id := c.Param("id")
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	farmSvc := services.NewFarmService(repository.NewFarmRepository(db))
-	farm, err := farmSvc.GetFarm(c.Request.Context(), id)
+
+	farm, err := h.svc.GetFarm(c.Request.Context(), id)
 	if err != nil || farm.UserID != userID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "farm not found"})
 		return
@@ -49,7 +55,7 @@ func GetFarmHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, farm)
 }
 
-func CreateFarmHandler(c *gin.Context) {
+func (h *FarmHandler) CreateFarm(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -91,16 +97,14 @@ func CreateFarmHandler(c *gin.Context) {
 		Longitude:          input.Longitude,
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	svc := services.NewFarmService(repository.NewFarmRepository(db))
-	if err := svc.CreateFarm(c.Request.Context(), farm); err != nil {
+	if err := h.svc.CreateFarm(c.Request.Context(), farm); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, farm)
 }
 
-func UpdateFarmHandler(c *gin.Context) {
+func (h *FarmHandler) UpdateFarm(c *gin.Context) {
 	id := c.Param("id")
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
@@ -125,9 +129,7 @@ func UpdateFarmHandler(c *gin.Context) {
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	svc := services.NewFarmService(repository.NewFarmRepository(db))
-	farm, err := svc.GetFarm(c.Request.Context(), id)
+	farm, err := h.svc.GetFarm(c.Request.Context(), id)
 	if err != nil || farm.UserID != userID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "farm not found"})
 		return
@@ -169,14 +171,14 @@ func UpdateFarmHandler(c *gin.Context) {
 		farm.Longitude = *input.Longitude
 	}
 
-	if err := svc.UpdateFarm(c.Request.Context(), farm); err != nil {
+	if err := h.svc.UpdateFarm(c.Request.Context(), farm); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, farm)
 }
 
-func DeleteFarmHandler(c *gin.Context) {
+func (h *FarmHandler) DeleteFarm(c *gin.Context) {
 	id := c.Param("id")
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
@@ -184,14 +186,12 @@ func DeleteFarmHandler(c *gin.Context) {
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	repo := repository.NewFarmRepository(db)
-	farm, err := repo.GetFarmByID(c.Request.Context(), id)
+	farm, err := h.svc.GetFarm(c.Request.Context(), id)
 	if err != nil || farm.UserID != userID {
 		c.JSON(http.StatusNotFound, gin.H{"error": "farm not found"})
 		return
 	}
-	if err := repo.DeleteFarm(c.Request.Context(), id); err != nil {
+	if err := h.svc.DeleteFarm(c.Request.Context(), id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

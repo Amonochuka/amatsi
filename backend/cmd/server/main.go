@@ -19,8 +19,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 
 	backend "github.com/amatsi/backend"
 	"github.com/amatsi/backend/internal/api/middleware"
@@ -104,7 +102,6 @@ func main() {
 	router.Use(middleware.RequestLogger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
-	router.Use(injectDeps(dbPool, redisClient, asynqClient, mqttClient, cfg))
 
 	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
 
@@ -207,31 +204,4 @@ func main() {
 		asynqServer.Shutdown()
 	}
 	slog.Info("Server shutdown complete")
-}
-
-func injectDeps(
-	db *pgxpool.Pool,
-	rdb *redis.Client,
-	asynqClient *asynq.Client,
-	mqttClient *clients.MQTTClient,
-	cfg *config.AppConfig,
-) gin.HandlerFunc {
-	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
-	return func(c *gin.Context) {
-		c.Set("db_pool", db)
-		c.Set("redis_client", rdb)
-		c.Set("asynq_client", asynqClient)
-		c.Set("jwt_secret", cfg.JWTSecret)
-		c.Set("jwt_ttl", cfg.JWTTokenTTL)
-		c.Set("jwt_refresh_ttl", cfg.JWTRefreshTokenTTL)
-		c.Set("kijanibox_base_url", cfg.KijaniBoxBaseURL)
-		c.Set("kijanibox_api_key", cfg.KijaniBoxAPIKey)
-		c.Set("ai_service_url", cfg.AIServiceURL)
-		c.Set("at_client", atClient)
-		c.Set("recommendations_daily_limit", cfg.RecommendationsDailyLimit)
-		if mqttClient != nil {
-			c.Set("mqtt_client", mqttClient)
-		}
-		c.Next()
-	}
 }
