@@ -2,13 +2,42 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/amatsi/backend/internal/api/handlers"
 	"github.com/amatsi/backend/internal/api/middleware"
+	"github.com/amatsi/backend/internal/clients"
 	"github.com/amatsi/backend/internal/config"
-	"github.com/redis/go-redis/v9"
+	"github.com/amatsi/backend/internal/repository"
+	"github.com/amatsi/backend/internal/services"
 )
 
-func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client) {
+// RegisterRoutes builds the dependency graph once (composition root) and binds
+// the HTTP routes. Handlers receive their dependencies through constructors
+// rather than pulling them from the Gin context.
+func RegisterRoutes(
+	router *gin.Engine,
+	cfg *config.AppConfig,
+	db *pgxpool.Pool,
+	rdb *redis.Client,
+	asynqClient *asynq.Client,
+	mqttClient *clients.MQTTClient,
+	atClient *clients.AfricasTalkingClient,
+) {
+	// --- Services ---------------------------------------------------------
+	authSvc := services.NewAuthService(
+		repository.NewUserRepository(db),
+		rdb,
+		cfg.JWTSecret,
+		cfg.JWTTokenTTL,
+		cfg.JWTRefreshTokenTTL,
+	)
+
+	// --- Handlers ---------------------------------------------------------
+	authHandler := handlers.NewAuthHandler(authSvc)
+
 	// Public SMS webhook for inbound replies (STOP/START opt-out). Africa's
 	// Talking calls this without a JWT, so it is registered outside the
 	// authenticated /api group.
@@ -18,14 +47,14 @@ func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client
 	auth := router.Group("/api/auth")
 	auth.Use(middleware.RateLimitFromEnv(rdb))
 	{
-		auth.POST("/signup", handlers.SignupHandler)
-		auth.POST("/login", handlers.LoginHandler)
-		auth.POST("/refresh", handlers.RefreshTokenHandler)
-		auth.POST("/logout", middleware.JWTAuthMiddleware(cfg.JWTSecret), handlers.LogoutHandler)
+		auth.POST("/signup", authHandler.Signup)
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/refresh", authHandler.Refresh)
+		auth.POST("/logout", middleware.JWTAuthMiddleware(cfg.JWTSecret, rdb), authHandler.Logout)
 	}
 
 	api := router.Group("/api")
-	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))
+	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret, rdb))
 	api.Use(middleware.RateLimitFromEnv(rdb))
 	{
 		api.GET("/farms", handlers.GetFarmsHandler)
@@ -49,7 +78,7 @@ func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client
 
 		api.GET("/usage", handlers.GetUsageHandler)
 
-		api.PUT("/auth/profile", handlers.UpdateProfileHandler)
-		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), handlers.ChangePasswordHandler)
+		api.PUT("/auth/profile", authHandler.UpdateProfile)
+		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), authHandler.ChangePassword)
 	}
 }

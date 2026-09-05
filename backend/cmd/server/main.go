@@ -106,6 +106,8 @@ func main() {
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
 	router.Use(injectDeps(dbPool, redisClient, asynqClient, mqttClient, cfg))
 
+	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
+
 	router.GET("/health", func(c *gin.Context) {
 		if err := dbPool.Ping(c.Request.Context()); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
@@ -121,10 +123,9 @@ func main() {
 		})
 	})
 
-	routes.RegisterRoutes(router, cfg, redisClient)
+	routes.RegisterRoutes(router, cfg, dbPool, redisClient, asynqClient, mqttClient, atClient)
 
 	if asynqServer != nil {
-		atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
 		smsProcessor := workers.NewSMSProcessor(atClient, repository.NewAlertRepository(dbPool))
 		recProcessor := workers.NewRecommendationProcessorFromConfig(
 			dbPool,
