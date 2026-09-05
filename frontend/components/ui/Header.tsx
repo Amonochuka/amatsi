@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, LogOut } from 'lucide-react';
+import { Bell, LogOut, Monitor, Moon, Sun } from 'lucide-react';
 import type { AuthUser } from '@/types';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 interface HeaderProps {
   user: AuthUser | null;
@@ -10,6 +11,11 @@ interface HeaderProps {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
+  const { theme, cycleTheme } = useTheme();
+
+  const ThemeIcon = theme === 'auto' ? Monitor : theme === 'dark' ? Sun : Moon;
+  const themeLabel =
+    theme === 'auto' ? 'Theme: auto (system)' : theme === 'dark' ? 'Theme: dark' : 'Theme: light';
   return (
     <header className="h-16 flex items-center justify-between px-8 bg-brand-bg border-b border-stone-200/60">
       <span className="font-serif text-xl font-semibold text-stone-900">
@@ -17,6 +23,14 @@ export function Header({ user, onLogout }: HeaderProps) {
       </span>
 
       <div className="flex items-center gap-4 text-xs">
+        <button
+          onClick={cycleTheme}
+          className="p-1.5 text-stone-600 hover:text-stone-900 transition-colors"
+          title={themeLabel}
+          aria-label={themeLabel}
+        >
+          <ThemeIcon className="w-4 h-4" />
+        </button>
         <Link
           href="/dashboard/alerts"
           className="p-1.5 text-stone-600 hover:text-stone-900"

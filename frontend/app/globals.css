@@ -2,21 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --brand-bg: #F5F1E8;
-  --brand-accent: #16301C;
-  --font-heading: 'Fraunces', Georgia, serif;
-  --font-body: 'Public Sans', 'Segoe UI', sans-serif;
+:root,
+[data-theme='light'] {
+  --brand-bg: 245 241 232; /* #F5F1E8 */
+  --brand-card: 255 255 255; /* #FFFFFF */
+  --brand-accent: 22 48 28; /* #16301C */
+  --brand-orange: 240 162 74; /* #F0A24A */
+
+  --stone-50: 250 250 249;
+  --stone-100: 245 245 244;
+  --stone-200: 231 229 228;
+  --stone-300: 214 211 209;
+  --stone-400: 168 162 158;
+  --stone-500: 120 113 108;
+  --stone-600: 87 83 78;
+  --stone-700: 68 64 60;
+  --stone-800: 41 37 36;
+  --stone-900: 28 25 23;
+  --stone-950: 12 10 9;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --brand-bg: 28 26 22; /* #1C1A16 */
+  --brand-card: 35 32 27; /* #23201B */
+  --brand-accent: 22 48 28; /* #16301C */
+  --brand-orange: 240 162 74; /* #F0A24A */
+
+  --stone-50: 24 24 25;
+  --stone-100: 41 37 36;
+  --stone-200: 68 64 60;
+  --stone-300: 87 83 78;
+  --stone-400: 120 113 108;
+  --stone-500: 168 162 158;
+  --stone-600: 168 162 158;
+  --stone-700: 214 211 209;
+  --stone-800: 231 229 228;
+  --stone-900: 250 250 249;
+  --stone-950: 250 250 249;
+
+  color-scheme: dark;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--brand-bg);
-  color: #1c1917;
+  background-color: rgb(var(--brand-bg));
+  color: rgb(var(--stone-900));
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, .font-serif {
   font-family: var(--font-heading);
   letter-spacing: -0.01em;
+}
+
+/* Dark-mode surface + accent-text overrides. These intentionally beat the
+   bare utilities so inputs/cards/status colors flip without per-component
+   dark: variants. */
+[data-theme='dark'] .bg-white {
+  background-color: rgb(var(--brand-card));
+}
+[data-theme='dark'] .text-emerald-700,
+[data-theme='dark'] .text-emerald-800 {
+  color: #6ee7b7;
+}
+[data-theme='dark'] .text-amber-700 {
+  color: #fbbf24;
+}
+[data-theme='dark'] .text-rose-500,
+[data-theme='dark'] .text-rose-600 {
+  color: #fda4af;
 }

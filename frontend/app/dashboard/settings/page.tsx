@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/components/theme/ThemeProvider";
 import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
 import type { Language, Theme, Usage, UserPhone } from "@/types";
@@ -50,10 +51,10 @@ export default function SettingsPage() {
 	const [passwordSaved, setPasswordSaved] = useState(false);
 	const [passwordSaving, setPasswordSaving] = useState(false);
 
-	// 8.3 / 8.4 / 8.5 — preference state
+	// 8.3 / 8.4 — preference state. Theme is local-only (persisted by ThemeProvider).
+	const { theme, setTheme } = useTheme();
 	const [language, setLanguage] = useState<Language>(user?.language ?? "en");
 	const [smsEnabled, setSmsEnabled] = useState(user?.sms_enabled ?? true);
-	const [theme, setTheme] = useState<Theme>("auto");
 	const [prefsSaving, setPrefsSaving] = useState(false);
 	const [prefsSaved, setPrefsSaved] = useState(false);
 
@@ -296,6 +297,7 @@ export default function SettingsPage() {
 							type="select"
 							options={THEME_OPTIONS}
 							value={theme}
+							hint="Applied instantly and remembered on this device. Auto follows your system setting."
 							onChange={(e) => setTheme(e.target.value as Theme)}
 						/>
 
