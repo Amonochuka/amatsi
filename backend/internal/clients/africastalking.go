@@ -13,11 +13,12 @@ import (
 type AfricasTalkingClient struct {
 	Username   string
 	APIKey     string
+	SenderID   string
 	BaseURL    string
 	HTTPClient *http.Client
 }
 
-func NewAfricasTalkingClient(username, apiKey string, isSandbox bool) *AfricasTalkingClient {
+func NewAfricasTalkingClient(username, apiKey, senderID string, isSandbox bool) *AfricasTalkingClient {
 	baseURL := "https://api.africastalking.com/version1/messaging"
 	if isSandbox {
 		baseURL = "https://api.sandbox.africastalking.com/version1/messaging"
@@ -25,6 +26,7 @@ func NewAfricasTalkingClient(username, apiKey string, isSandbox bool) *AfricasTa
 	return &AfricasTalkingClient{
 		Username: username,
 		APIKey:   apiKey,
+		SenderID: senderID,
 		BaseURL:  baseURL,
 		HTTPClient: &http.Client{
 			Timeout: 10 * time.Second,
@@ -56,6 +58,9 @@ func (c *AfricasTalkingClient) SendSMS(ctx context.Context, to, message string) 
 	data.Set("username", c.Username)
 	data.Set("to", to)
 	data.Set("message", message)
+	if c.SenderID != "" {
+		data.Set("from", c.SenderID)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL, strings.NewReader(data.Encode()))
 	if err != nil {
@@ -79,7 +84,7 @@ func (c *AfricasTalkingClient) SendSMS(ctx context.Context, to, message string) 
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return err
 	}
-	
+
 	if len(res.SMSMessageData.Recipients) > 0 && res.SMSMessageData.Recipients[0].StatusCode > 102 {
 		return fmt.Errorf("failed to deliver SMS: %s", res.SMSMessageData.Recipients[0].Status)
 	}

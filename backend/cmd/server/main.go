@@ -103,7 +103,7 @@ func main() {
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
 
-	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, true)
+	atClient := clients.NewAfricasTalkingClient(cfg.AfricaTalkingUsername, cfg.AfricaTalkingAPIKey, cfg.AfricaTalkingSenderID, true)
 
 	router.GET("/health", func(c *gin.Context) {
 		if err := dbPool.Ping(c.Request.Context()); err != nil {
