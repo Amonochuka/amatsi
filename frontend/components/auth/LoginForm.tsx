@@ -8,12 +8,26 @@ interface LoginFormProps {
   onSwitchToSignup: () => void;
 }
 
+const SESSION_MESSAGES: Record<string, string> = {
+  expired: 'Your session has expired. Please log in again to continue.',
+  revoked: 'Your session has been closed. Please log in again to continue.',
+};
+
+function getBannerReason(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('reason');
+}
+
 export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [phone, setPhone] = useState('0712345678');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionNotice] = useState<string | null>(() => {
+    const reason = getBannerReason();
+    return reason ? (SESSION_MESSAGES[reason] ?? SESSION_MESSAGES.expired) : null;
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +36,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
 
     try {
       const res = await authAPI.login({ phone_number: phone.trim(), password });
-      setSession(res.token, res.user);
+      setSession(res.token, res.refresh_token, res.user);
       window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Login error:', err);
@@ -51,6 +65,12 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         Sign in to view your soil and weather updates, check your irrigation
         advice, and review your SMS alerts.
       </p>
+
+      {sessionNotice && (
+        <div className="w-full mb-4 p-2.5 rounded-lg bg-amber-950/80 border border-amber-500/50 text-xs text-amber-200 text-center backdrop-blur-sm">
+          {sessionNotice}
+        </div>
+      )}
 
       {error && (
         <div className="w-full mb-4 p-2.5 rounded-lg bg-red-950/80 border border-red-500/50 text-xs text-red-200 text-center backdrop-blur-sm">

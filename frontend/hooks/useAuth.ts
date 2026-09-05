@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AuthUser } from '@/types';
-import { authAPI, getToken, getStoredUser, clearSession } from '@/lib/api/client';
+import { authAPI, getToken, getRefreshToken, getStoredUser, clearSession } from '@/lib/api/client';
 
 export function useAuth(requireAuth = true) {
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
@@ -11,9 +11,9 @@ export function useAuth(requireAuth = true) {
   const router = useRouter();
 
   useEffect(() => {
-    // If a token exists but no user is cached, we are still authenticated —
-    // the dashboard pages will load user-related data from the API directly.
-    const authenticated = !!getToken();
+    // A valid session is any stored token — an access token that has expired
+    // is fine, the API client refreshes it silently on the next request.
+    const authenticated = !!getToken() || !!getRefreshToken();
     if (authenticated && !getStoredUser()) {
       // Token present, no cached profile. Keep them on the page; profile can
       // be refreshed later. For now just mark loading complete.

@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
-import { authAPI, phoneAPI, setSession, getStoredUser, TOKEN_KEY, usageAPI } from "@/lib/api/client";
+import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
 import type { Language, Theme, Usage, UserPhone } from "@/types";
 
@@ -92,7 +92,7 @@ export default function SettingsPage() {
 	const updateStoredUser = (patch: Partial<typeof user>) => {
 		const current = getStoredUser();
 		if (current) {
-			setSession(localStorage.getItem(TOKEN_KEY)!, { ...current, ...patch } as any);
+			setStoredUser({ ...current, ...patch } as any);
 		}
 	};
 

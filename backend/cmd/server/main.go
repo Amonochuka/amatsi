@@ -222,6 +222,7 @@ func injectDeps(
 		c.Set("asynq_client", asynqClient)
 		c.Set("jwt_secret", cfg.JWTSecret)
 		c.Set("jwt_ttl", cfg.JWTTokenTTL)
+		c.Set("jwt_refresh_ttl", cfg.JWTRefreshTokenTTL)
 		c.Set("kijanibox_base_url", cfg.KijaniBoxBaseURL)
 		c.Set("kijanibox_api_key", cfg.KijaniBoxAPIKey)
 		c.Set("ai_service_url", cfg.AIServiceURL)

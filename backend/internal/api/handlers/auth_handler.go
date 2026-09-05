@@ -13,6 +13,7 @@ import (
 	"github.com/amatsi/backend/internal/api/middleware"
 	"github.com/amatsi/backend/internal/models"
 	"github.com/amatsi/backend/internal/repository"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -74,12 +75,12 @@ func SignupHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := issueJWT(c, user.ID)
+	token, refreshToken, err := issueTokenPair(c, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue token"})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"token": token, "user": user})
+	c.JSON(http.StatusCreated, gin.H{"token": token, "refresh_token": refreshToken, "user": user})
 }
 
 func LoginHandler(c *gin.Context) {
@@ -104,18 +105,111 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := issueJWT(c, user.ID)
+	token, refreshToken, err := issueTokenPair(c, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue token"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": token, "user": user})
+	c.JSON(http.StatusOK, gin.H{"token": token, "refresh_token": refreshToken, "user": user})
+}
+
+// RefreshTokenHandler exchanges a valid refresh token for a new token pair,
+// rotating the refresh token: the presented refresh token is revoked and a
+// fresh one is returned, so an old (possibly stolen) refresh token cannot be
+// replayed.
+func RefreshTokenHandler(c *gin.Context) {
+	var input struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token is required"})
+		return
+	}
+
+	secret := c.MustGet("jwt_secret").(string)
+	claims, err := middleware.ParseJWT(strings.TrimSpace(input.RefreshToken), secret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		return
+	}
+
+	if tokType, ok := claims["typ"].(string); !ok || tokType != middleware.RefreshTokenType {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		return
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	jti, ok := claims["jti"].(string)
+	if !ok || jti == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	expiresAtUnix, ok := claims["exp"].(float64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	expiresAt := time.Unix(int64(expiresAtUnix), 0)
+
+	redisClient, exists := c.Get("redis_client")
+	if !exists {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "authentication service unavailable"})
+		return
+	}
+	rdb, ok := redisClient.(*redis.Client)
+	if !ok {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "authentication service unavailable"})
+		return
+	}
+
+	revoked, err := middleware.IsRevoked(c.Request.Context(), rdb, jti)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "authentication service unavailable"})
+		return
+	}
+	if revoked {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token has been revoked"})
+		return
+	}
+
+	// Rotate: revoke the presented refresh token, issue a fresh pair.
+	if err := middleware.RevokeRefreshToken(c, jti, expiresAt); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "session refresh unavailable"})
+		return
+	}
+
+	token, refreshToken, err := issueTokenPair(c, sub)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue token"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"token": token, "refresh_token": refreshToken})
 }
 
 func LogoutHandler(c *gin.Context) {
 	if err := middleware.RevokeToken(c); err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "logout service unavailable"})
 		return
+	}
+
+	// If the client still holds a refresh token, revoke it too so the whole
+	// session dies rather than just the (short-lived) access token.
+	var input struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := c.ShouldBindJSON(&input); err == nil && strings.TrimSpace(input.RefreshToken) != "" {
+		secret := c.MustGet("jwt_secret").(string)
+		if claims, err := middleware.ParseJWT(strings.TrimSpace(input.RefreshToken), secret); err == nil {
+			if jti, ok := claims["jti"].(string); ok && jti != "" {
+				if expiresAtUnix, ok := claims["exp"].(float64); ok {
+					_ = middleware.RevokeRefreshToken(c, jti, time.Unix(int64(expiresAtUnix), 0))
+				}
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "logged_out"})
@@ -225,15 +319,33 @@ func ChangePasswordHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "password_updated"})
 }
 
-func issueJWT(c *gin.Context, userID string) (string, error) {
+func issueJWT(c *gin.Context, tokenType string, userID string, ttl time.Duration) (string, error) {
 	secret := c.MustGet("jwt_secret").(string)
-	ttl := c.MustGet("jwt_ttl").(time.Duration)
+	now := time.Now()
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"jti": uuid.NewString(),
-		"exp": time.Now().Add(ttl).Unix(),
-		"iat": time.Now().Unix(),
+		"typ": tokenType,
+		"exp": now.Add(ttl).Unix(),
+		"iat": now.Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
+}
+
+// issueTokenPair mints a short-lived access token plus a long-lived refresh
+// token for a user.
+func issueTokenPair(c *gin.Context, userID string) (accessToken, refreshToken string, err error) {
+	accessTTL := c.MustGet("jwt_ttl").(time.Duration)
+	refreshTTL := c.MustGet("jwt_refresh_ttl").(time.Duration)
+
+	accessToken, err = issueJWT(c, middleware.AccessTokenType, userID, accessTTL)
+	if err != nil {
+		return "", "", err
+	}
+	refreshToken, err = issueJWT(c, middleware.RefreshTokenType, userID, refreshTTL)
+	if err != nil {
+		return "", "", err
+	}
+	return accessToken, refreshToken, nil
 }

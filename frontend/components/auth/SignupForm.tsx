@@ -29,7 +29,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         language: 'en',
         sms_enabled: true,
       });
-      setSession(res.token, res.user);
+      setSession(res.token, res.refresh_token, res.user);
       window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Signup error:', err);

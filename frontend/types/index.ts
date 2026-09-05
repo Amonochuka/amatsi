@@ -27,7 +27,13 @@ export interface AuthUser {
 
 export interface AuthResponse {
 	token: string;
+	refresh_token: string;
 	user: AuthUser;
+}
+
+export interface TokenPair {
+	token: string;
+	refresh_token: string;
 }
 
 export interface LoginPayload {

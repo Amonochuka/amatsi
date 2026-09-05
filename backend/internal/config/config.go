@@ -30,9 +30,10 @@ type AppConfig struct {
 	SupabaseDBURL string
 
 	// JWT Authentication
-	JWTSecret        string
-	JWTTokenTTL      time.Duration
-	JWTSigningMethod string
+	JWTSecret           string
+	JWTTokenTTL         time.Duration
+	JWTRefreshTokenTTL  time.Duration
+	JWTSigningMethod    string
 
 	// KijaniBox API
 	KijaniBoxAPIKey  string
@@ -70,8 +71,9 @@ func Load() (*AppConfig, error) {
 	cfg := &AppConfig{
 		// Defaults
 		Port:                     getEnvOrDefault("PORT", "8080"),
-		JWTTokenTTL:              24 * time.Hour,
-		JWTSigningMethod:         "HS256",
+		JWTTokenTTL:             getDurationEnvOrDefault("JWT_TOKEN_TTL", 15*time.Minute),
+		JWTRefreshTokenTTL:      getDurationEnvOrDefault("JWT_REFRESH_TOKEN_TTL", 30*24*time.Hour),
+		JWTSigningMethod:        "HS256",
 		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
 		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
 		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
@@ -132,6 +134,15 @@ func getIntEnvOrDefault(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if n, err := strconv.Atoi(value); err == nil {
 			return n
+		}
+	}
+	return defaultValue
+}
+
+func getDurationEnvOrDefault(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if d, err := time.ParseDuration(value); err == nil {
+			return d
 		}
 	}
 	return defaultValue

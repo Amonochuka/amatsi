@@ -60,8 +60,10 @@ Vercel injects `NEXT_PUBLIC_API_URL` at build time for the deployed app.
 
 ## Key flows
 
-- **Auth**: tokens stored in `localStorage` via `lib/api/client.ts`
-  (`setSession`); `hooks/useAuth.ts` refreshes the logged-in user.
+- **Auth**: short-lived access token + long-lived refresh token stored in
+  `localStorage` via `lib/api/client.ts` (`setSession`); on 401 the client
+  silently refreshes the access token (`/auth/refresh`) and retries once before
+  bouncing to login. `hooks/useAuth.ts` tracks the logged-in user.
 - **Location**: farmers pick a farm location by search or device GPS
   (`components/ui/LocationPicker.tsx`) — coordinates are never typed manually.
   Search uses OpenStreetMap Nominatim; the browser GPS provides the fallback.
