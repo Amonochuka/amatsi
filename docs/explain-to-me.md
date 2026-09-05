@@ -311,3 +311,57 @@ The **daily 06:00 scheduled run previously ignored `sms_enabled`** — a user wh
 turned SMS off still got the 6am SMS after an IRRIGATE verdict.
 `recommendation_service.go` now skips the SMS branch when `user.SMSEnabled` is
 false (`GenerateRecommendation`), matching the manual `/api/alerts/send` guard.
+
+---
+
+## 12. AFRICA'S TALKING SANDBOX vs LIVE SMS — "so which one am I sending on?"
+
+There are **two separate Africa's Talking APIs**, and the app talks to exactly
+**one** at any time (one client, one mode — never both simultaneously):
+
+| | Sandbox (test) | Live (production) |
+|---|---|---|
+| Endpoint | `api.sandbox.africastalking.com` | `api.africastalking.com` |
+| Credentials | username `sandbox` + sandbox key | your real username + live key |
+| Where messages go | the AT simulator dashboard — **no real phone ever gets them** | real farmers' phones |
+| `from` (sender ID) | ignored | used — needs the sender ID approved in your account |
+
+### What used to be wrong
+- `isSandbox` was **hardcoded `true`** in `main.go` — so even with real
+  credentials in `.env`, the app could *never* send a real SMS.
+- `AFRICA_TALKING_SENDER_ID` was loaded into the config struct but **never sent**
+  in the API request (`SendSMS` only set `username`/`to`/`message`). The
+  `AMATSI` branding you configured silently did nothing — AT used your account's
+  default sender.
+
+### The fix
+- `SendSMS` now sends `from=<SenderID>` whenever the sender ID is set
+  (`backend/internal/clients/africastalking.go`). The client constructor takes it:
+  `NewAfricasTalkingClient(username, apiKey, senderID string, isSandbox bool)`.
+- Sandbox mode is now an **env flag**, read once at startup
+  (`config.Load()`): `AFRICA_TALKING_SANDBOX` (default `true`). So switching
+  between test and live is a **config change, not a code change / redeploy**.
+
+### How switching works (env is read at process start)
+- **Local dev**: edit `backend/.env` → restart the server (`go run ./cmd/server`).
+- **On Render**: edit the env var in the Render dashboard → it redeploys/restarts,
+  **or** set `value: "false"` in `render.yaml` and push (autoDeploy applies it).
+
+To go live, flip **three vars together**:
+```
+AFRICA_TALKING_SANDBOX=false
+AFRICA_TALKING_USERNAME=<your real AT username>   (not "sandbox")
+AFRICA_TALKING_API_KEY=<your live account key>
+```
+
+### Sender ID gotcha when you upgrade
+`from=AMATSI` is only honored by AT if **"AMATSI" is an approved alphanumeric
+sender ID** on the live account (you apply for it in the AT dashboard). Not
+approved → AT drops your `from` and falls back to your default sender or rejects.
+
+### The one AT config that is STILL dead by design
+`AFRICA_TALKING_CALLBACK_URL` is loaded into the config struct but never read by
+code. That's not a bug to fix — Africa's Talking delivers the inbound
+STOP/START reply to whichever URL you set in **their dashboard**, not via env.
+For the opt-out webhook (section 11) to fire in production, paste
+`https://amatsi.onrender.com/api/sms/inbound` into the AT web console.
