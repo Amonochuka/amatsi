@@ -8,7 +8,7 @@ export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   return (
-    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden font-sans">
+    <main className="theme-hero relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden font-sans">
       {/* 1. Full-screen Full-bleed Background Image */}
       <div 
         className="fixed inset-0 bg-cover bg-center bg-no-repeat scale-105"
