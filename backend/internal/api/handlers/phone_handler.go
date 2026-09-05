@@ -4,22 +4,30 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/amatsi/backend/internal/api/middleware"
 	"github.com/amatsi/backend/internal/models"
-	"github.com/amatsi/backend/internal/repository"
+	"github.com/amatsi/backend/internal/services"
 )
 
-// GetUserPhonesHandler lists all SMS recipient numbers for the logged-in user.
-func GetUserPhonesHandler(c *gin.Context) {
+// PhoneHandler serves the /api/phones routes (additional SMS recipients).
+type PhoneHandler struct {
+	svc *services.PhoneService
+}
+
+func NewPhoneHandler(svc *services.PhoneService) *PhoneHandler {
+	return &PhoneHandler{svc: svc}
+}
+
+// GetPhones lists all SMS recipient numbers for the logged-in user.
+func (h *PhoneHandler) GetPhones(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	phones, err := repository.NewPhoneRepository(db).GetPhonesByUser(c.Request.Context(), userID)
+	phones, err := h.svc.GetPhones(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -30,10 +38,10 @@ func GetUserPhonesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, phones)
 }
 
-// AddUserPhoneHandler registers an additional SMS recipient. The account's
-// primary phone number is treated as the first recipient on signup; any extra
-// numbers added here receive the same irrigation alerts.
-func AddUserPhoneHandler(c *gin.Context) {
+// AddPhone registers an additional SMS recipient. The account's primary phone
+// number is treated as the first recipient on signup; any extra numbers added
+// here receive the same irrigation alerts.
+func (h *PhoneHandler) AddPhone(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -55,9 +63,7 @@ func AddUserPhoneHandler(c *gin.Context) {
 		Label:       defaultPhoneLabel(input.Label),
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	repo := repository.NewPhoneRepository(db)
-	if err := repo.CreatePhone(c.Request.Context(), phone); err != nil {
+	if err := h.svc.AddPhone(c.Request.Context(), phone); err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "phone number already added for this account"})
 		return
 	}
@@ -65,17 +71,16 @@ func AddUserPhoneHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, phone)
 }
 
-// DeleteUserPhoneHandler removes an additional SMS recipient. Primary numbers
-// cannot be removed here — change the account phone in profile instead.
-func DeleteUserPhoneHandler(c *gin.Context) {
+// DeletePhone removes an additional SMS recipient. Primary numbers cannot be
+// removed here — change the account phone in profile instead.
+func (h *PhoneHandler) DeletePhone(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	db := c.MustGet("db_pool").(*pgxpool.Pool)
-	if err := repository.NewPhoneRepository(db).DeletePhone(c.Request.Context(), c.Param("id"), userID); err != nil {
+	if err := h.svc.DeletePhone(c.Request.Context(), c.Param("id"), userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

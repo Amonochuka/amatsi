@@ -26,6 +26,15 @@ func RegisterRoutes(
 	mqttClient *clients.MQTTClient,
 	atClient *clients.AfricasTalkingClient,
 ) {
+	// --- Repositories -----------------------------------------------------
+	recRepo := repository.NewRecommendationRepository(db)
+	farmRepo := repository.NewFarmRepository(db)
+	weatherRepo := repository.NewWeatherRepository(db)
+	phoneRepo := repository.NewPhoneRepository(db)
+
+	// --- Clients ----------------------------------------------------------
+	kijani := clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey)
+
 	// --- Services ---------------------------------------------------------
 	authSvc := services.NewAuthService(
 		repository.NewUserRepository(db),
@@ -34,9 +43,15 @@ func RegisterRoutes(
 		cfg.JWTTokenTTL,
 		cfg.JWTRefreshTokenTTL,
 	)
+	phoneSvc := services.NewPhoneService(phoneRepo)
+	weatherSvc := services.NewWeatherService(farmRepo, weatherRepo, kijani, rdb)
+	usageSvc := services.NewUsageService(recRepo, atClient, cfg.RecommendationsDailyLimit)
 
 	// --- Handlers ---------------------------------------------------------
 	authHandler := handlers.NewAuthHandler(authSvc)
+	phoneHandler := handlers.NewPhoneHandler(phoneSvc)
+	weatherHandler := handlers.NewWeatherHandler(weatherSvc)
+	usageHandler := handlers.NewUsageHandler(usageSvc)
 
 	// Public SMS webhook for inbound replies (STOP/START opt-out). Africa's
 	// Talking calls this without a JWT, so it is registered outside the
@@ -63,8 +78,8 @@ func RegisterRoutes(
 		api.PUT("/farms/:id", handlers.UpdateFarmHandler)
 		api.DELETE("/farms/:id", handlers.DeleteFarmHandler)
 
-		api.GET("/weather/:farmId", handlers.GetWeatherHandler)
-		api.GET("/soil/:farmId", handlers.GetSoilMoistureHandler)
+		api.GET("/weather/:farmId", weatherHandler.GetWeather)
+		api.GET("/soil/:farmId", weatherHandler.GetSoilMoisture)
 
 		api.GET("/recommendations/:farmId", handlers.GetRecommendationsHandler)
 		api.POST("/recommendations/generate", middleware.StrictRateLimitFromEnv(rdb), handlers.GenerateRecommendationHandler)
@@ -72,11 +87,11 @@ func RegisterRoutes(
 		api.POST("/alerts/send", middleware.StrictRateLimitFromEnv(rdb), handlers.SendAlertHandler)
 		api.GET("/alerts/history", handlers.GetAlertHistoryHandler)
 
-		api.GET("/phones", handlers.GetUserPhonesHandler)
-		api.POST("/phones", middleware.StrictRateLimitFromEnv(rdb), handlers.AddUserPhoneHandler)
-		api.DELETE("/phones/:id", handlers.DeleteUserPhoneHandler)
+		api.GET("/phones", phoneHandler.GetPhones)
+		api.POST("/phones", middleware.StrictRateLimitFromEnv(rdb), phoneHandler.AddPhone)
+		api.DELETE("/phones/:id", phoneHandler.DeletePhone)
 
-		api.GET("/usage", handlers.GetUsageHandler)
+		api.GET("/usage", usageHandler.Get)
 
 		api.PUT("/auth/profile", authHandler.UpdateProfile)
 		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), authHandler.ChangePassword)
