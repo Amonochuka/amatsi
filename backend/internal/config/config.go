@@ -30,10 +30,10 @@ type AppConfig struct {
 	SupabaseDBURL string
 
 	// JWT Authentication
-	JWTSecret           string
-	JWTTokenTTL         time.Duration
-	JWTRefreshTokenTTL  time.Duration
-	JWTSigningMethod    string
+	JWTSecret          string
+	JWTTokenTTL        time.Duration
+	JWTRefreshTokenTTL time.Duration
+	JWTSigningMethod   string
 
 	// KijaniBox API
 	KijaniBoxAPIKey  string
@@ -44,6 +44,10 @@ type AppConfig struct {
 	AfricaTalkingUsername    string
 	AfricaTalkingSenderID    string
 	AfricaTalkingCallbackURL string
+	// AfricaTalkingSandbox switches between the real SMS API and the
+	// Africa's Talking test sandbox (default true — messages go to the
+	// simulator, not real phones).
+	AfricaTalkingSandbox bool
 
 	// Redis / Upstash
 	RedisURL string
@@ -70,14 +74,15 @@ func Load() (*AppConfig, error) {
 
 	cfg := &AppConfig{
 		// Defaults
-		Port:                     getEnvOrDefault("PORT", "8080"),
-		JWTTokenTTL:             getDurationEnvOrDefault("JWT_TOKEN_TTL", 15*time.Minute),
-		JWTRefreshTokenTTL:      getDurationEnvOrDefault("JWT_REFRESH_TOKEN_TTL", 30*24*time.Hour),
-		JWTSigningMethod:        "HS256",
-		KijaniBoxBaseURL:         getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
-		AfricaTalkingSenderID:    getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
-		AfricaTalkingCallbackURL: os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
-		RecommendationCron:       getEnvOrDefault("RECOMMENDATION_CRON", "0 6 * * *"),
+		Port:                      getEnvOrDefault("PORT", "8080"),
+		JWTTokenTTL:               getDurationEnvOrDefault("JWT_TOKEN_TTL", 15*time.Minute),
+		JWTRefreshTokenTTL:        getDurationEnvOrDefault("JWT_REFRESH_TOKEN_TTL", 30*24*time.Hour),
+		JWTSigningMethod:          "HS256",
+		KijaniBoxBaseURL:          getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
+		AfricaTalkingSenderID:     getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
+		AfricaTalkingCallbackURL:  os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
+		AfricaTalkingSandbox:      getBoolEnvOrDefault("AFRICA_TALKING_SANDBOX", true),
+		RecommendationCron:        getEnvOrDefault("RECOMMENDATION_CRON", "0 6 * * *"),
 		RecommendationsDailyLimit: getIntEnvOrDefault("RECOMMENDATIONS_DAILY_LIMIT", 5),
 
 		// Required (loaded below)
@@ -134,6 +139,15 @@ func getIntEnvOrDefault(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if n, err := strconv.Atoi(value); err == nil {
 			return n
+		}
+	}
+	return defaultValue
+}
+
+func getBoolEnvOrDefault(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if b, err := strconv.ParseBool(value); err == nil {
+			return b
 		}
 	}
 	return defaultValue

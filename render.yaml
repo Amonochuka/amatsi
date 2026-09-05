@@ -54,3 +54,5 @@ services:
         value: sandbox
       - key: AFRICA_TALKING_SENDER_ID
         value: AMATSI
+      - key: AFRICA_TALKING_SANDBOX
+        value: "true"
