@@ -93,7 +93,7 @@ func (s *RecommendationService) GenerateRecommendation(ctx context.Context, farm
 			if user.IsPremium && farm.DeviceID != nil && *farm.DeviceID != "" && s.mqtt != nil {
 				durationMinutes := 45.0
 				_ = s.mqtt.TriggerIrrigation(*farm.DeviceID, durationMinutes)
-			} else {
+			} else if user.SMSEnabled {
 				// Standard user -> Send SMS Alert to all recipients
 				msg := "AMATSI Advisor: " + rec.Reason + " Action: " + rec.Action
 				_ = s.alertSvc.SendAlertToRecipients(ctx, farmID, user.ID, user.PhoneNumber, msg)

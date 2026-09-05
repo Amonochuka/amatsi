@@ -263,3 +263,51 @@ becomes pure future-proofing.
 
 **Convention**: new tables still ship with the RLS block (enable RLS + policy)
 so the schema stays PostgREST-safe if the lockdown is ever reverted.
+
+---
+
+## 11. SMS OPT-OUT — "what happens when a farmer replies STOP?"
+
+SMS in Kenya must honor opt-outs. Two layers handle this:
+
+### Layer 1 — the carrier side (automatic, not our code)
+When a recipient replies **STOP**, Africa's Talking records the opt-out at its
+gateway and **blocks future messages to that number** until a new opt-in (e.g.
+replying START). This happens even if our app knows nothing about it — we can't
+send to that number again anyway. So the DB work below is about **reflecting
+that state in our UI/data**, not about blocking the send (the gateway already
+did).
+
+### Layer 2 — our webhook (`POST /api/sms/inbound`)
+Africa's Talking also forwards the reply to a callback URL we configure in the
+dashboard (MO callback). The handler:
+
+1. Reads `from` (the replying number) + `text`.
+2. Classifies the **first word** of the message:
+   - `STOP`, `STOPALL`, `CANCEL`, `END`, `QUIT`, `UNSUBSCRIBE`, `ACHA` → opt-out
+   - `START`, `YES`, `BEGIN`, `UNSTOP`, `ANZA` → opt-in (re-enable)
+   - anything else → ignored, returns `200`
+3. Matches the number **format-flexibly**: digits are stripped from both sides,
+   so `+254 700 000 000` matches a stored `254700000000` or `0700000000`.
+4. If it's the **account primary phone** → sets `users.sms_enabled = false`
+   (or `true` for START). The profile toggle in Settings reads this same flag.
+5. If it's an **extra recipient** (`user_phones`) → sets that row's
+   `opted_out = true`. Opted-out rows are excluded from the recipient list
+   (`GetPhonesByUser`) and updates to sends, and the Settings list stops showing
+   them — the DB-level equivalent of the carrier block.
+
+Route is registered **outside** the authenticated `/api` group (Africa's Talking
+can't present a JWT). It accepts POST form data or GET query params. To enable
+in production, set the SMS callback URL in the Africa's Talking dashboard to:
+`https://amatsi.onrender.com/api/sms/inbound`.
+
+### Why both settings?
+`sms_enabled` is the farmer's master switch for the *whole account*; `opted_out`
+is a *per-number* flag for extra recipients. A worker who replies STOP no longer
+kills alerts for the farmer's own phone.
+
+### One hidden fix that came with this
+The **daily 06:00 scheduled run previously ignored `sms_enabled`** — a user who
+turned SMS off still got the 6am SMS after an IRRIGATE verdict.
+`recommendation_service.go` now skips the SMS branch when `user.SMSEnabled` is
+false (`GenerateRecommendation`), matching the manual `/api/alerts/send` guard.

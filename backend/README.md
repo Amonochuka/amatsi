@@ -73,10 +73,13 @@ All `/api` routes except signup/login require a Bearer JWT.
 | GET    | `/api/recommendations/:farmId`  | Latest stored recommendation                  |
 | POST   | `/api/recommendations/generate` | Generate recommendation via AI service        |
 | GET    | `/api/alerts/history`           | Auto-sent SMS alert history                   |
+| POST   | `/api/sms/inbound`              | **Public** webhook: SMS reply opt-out (STOP/START) |
 
 All password/reset-style and SMS endpoints are rate-limited via Redis
 (`RateLimitFromEnv` for general, `StrictRateLimitFromEnv` for
-send/generate/change-password).
+send/generate/change-password). The `/api/sms/inbound` webhook is the exception:
+it is public (Africa's Talking cannot present a JWT) and accepts POST form / GET
+query params (`from`, `text`). See its handler in `internal/api/handlers/sms_inbound_handler.go`.
 
 ## Migrations
 

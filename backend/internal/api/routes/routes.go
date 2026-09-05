@@ -9,6 +9,12 @@ import (
 )
 
 func RegisterRoutes(router *gin.Engine, cfg *config.AppConfig, rdb *redis.Client) {
+	// Public SMS webhook for inbound replies (STOP/START opt-out). Africa's
+	// Talking calls this without a JWT, so it is registered outside the
+	// authenticated /api group.
+	router.GET("/api/sms/inbound", handlers.SMSInboundHandler)
+	router.POST("/api/sms/inbound", handlers.SMSInboundHandler)
+
 	auth := router.Group("/api/auth")
 	auth.Use(middleware.RateLimitFromEnv(rdb))
 	{

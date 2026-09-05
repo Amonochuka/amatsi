@@ -510,15 +510,15 @@
 - [x] Track delivery status
 
 ### Alert Triggers
-- [ ] Implement daily scheduled recommendations:
-  - [ ] Get all farms
-  - [ ] For each farm, generate recommendation
-  - [ ] Send SMS if preference is enabled
-  - [ ] Log all activity
+- [x] Implement daily scheduled recommendations:
+  - [x] Get all farms
+  - [x] For each farm, generate recommendation
+  - [x] Send SMS if preference is enabled
+  - [x] Log all activity
 - [ ] Implement manual SMS trigger (user clicks button)
-- [ ] Add SMS opt-out handling
-  - [ ] If farmer replies "STOP", update database preference
-  - [ ] Africa's Talking handles auto opt-out
+- [x] Add SMS opt-out handling
+  - [x] If farmer replies "STOP", update database preference
+  - [x] Africa's Talking handles auto opt-out
 
 ## PHASE 7: DEPLOYMENT
 

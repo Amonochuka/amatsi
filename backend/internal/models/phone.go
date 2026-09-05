@@ -11,5 +11,6 @@ type UserPhone struct {
 	PhoneNumber string    `json:"phone_number" db:"phone_number"`
 	Label       string    `json:"label" db:"label"`
 	IsPrimary   bool      `json:"is_primary" db:"is_primary"`
+	OptedOut    bool      `json:"opted_out" db:"opted_out"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }

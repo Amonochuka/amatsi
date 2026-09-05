@@ -68,6 +68,48 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*mod
 	return user, nil
 }
 
+// FindUserByDialPhone looks up a user whose number matches after stripping
+// non-digit characters, so replies from Africa's Talking (which may omit the
+// leading plus or country code) still resolve to the account.
+func (r *UserRepository) FindUserByDialPhone(ctx context.Context, dialDigits string) (*models.User, error) {
+	query := `
+		SELECT id, full_name, phone_number, COALESCE(email, ''), COALESCE(password_hash, ''),
+		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, created_at, updated_at
+		FROM users
+		WHERE regexp_replace(phone_number, '[^0-9]', '', 'g') = $1
+	`
+	user := &models.User{}
+	err := r.db.QueryRow(ctx, query, dialDigits).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.PhoneNumber,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Language,
+		&user.SMSEnabled,
+		&user.IsPremium,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+// SetSMSEnabled flips the account's SMS alert preference (used for inbound
+// STOP / START replies).
+func (r *UserRepository) SetSMSEnabled(ctx context.Context, userID string, smsEnabled bool) error {
+	query := `
+		UPDATE users
+		SET sms_enabled = $2,
+		    updated_at = timezone('utc'::text, now())
+		WHERE id = $1
+	`
+	_, err := r.db.Exec(ctx, query, userID, smsEnabled)
+	return err
+}
+
 func (r *UserRepository) UpdateUserProfile(ctx context.Context, user *models.User) error {
 	query := `
 		UPDATE users
