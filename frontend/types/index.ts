@@ -21,6 +21,7 @@ export interface AuthUser {
 	language: Language;
 	sms_enabled: boolean;
 	is_premium: boolean;
+	is_admin: boolean;
 	created_at: string;
 	updated_at: string;
 }

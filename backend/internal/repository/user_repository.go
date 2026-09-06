@@ -19,7 +19,7 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	query := `
 		SELECT id, full_name, phone_number, COALESCE(email, ''), COALESCE(password_hash, ''),
-		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, created_at, updated_at
+		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, is_admin, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -33,6 +33,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*models.Us
 		&user.Language,
 		&user.SMSEnabled,
 		&user.IsPremium,
+		&user.IsAdmin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -45,7 +46,7 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*models.Us
 func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*models.User, error) {
 	query := `
 		SELECT id, full_name, phone_number, COALESCE(email, ''), COALESCE(password_hash, ''),
-		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, created_at, updated_at
+		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, is_admin, created_at, updated_at
 		FROM users
 		WHERE phone_number = $1
 	`
@@ -59,6 +60,7 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*mod
 		&user.Language,
 		&user.SMSEnabled,
 		&user.IsPremium,
+		&user.IsAdmin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -74,7 +76,7 @@ func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*mod
 func (r *UserRepository) FindUserByDialPhone(ctx context.Context, dialDigits string) (*models.User, error) {
 	query := `
 		SELECT id, full_name, phone_number, COALESCE(email, ''), COALESCE(password_hash, ''),
-		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, created_at, updated_at
+		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, is_admin, created_at, updated_at
 		FROM users
 		WHERE regexp_replace(phone_number, '[^0-9]', '', 'g') = $1
 	`
@@ -88,6 +90,7 @@ func (r *UserRepository) FindUserByDialPhone(ctx context.Context, dialDigits str
 		&user.Language,
 		&user.SMSEnabled,
 		&user.IsPremium,
+		&user.IsAdmin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -108,6 +111,25 @@ func (r *UserRepository) SetSMSEnabled(ctx context.Context, userID string, smsEn
 	`
 	_, err := r.db.Exec(ctx, query, userID, smsEnabled)
 	return err
+}
+
+// SetPremium grants or revokes the premium tier for a user (admin-only). It
+// returns pgx.ErrNoRows when the user does not exist.
+func (r *UserRepository) SetPremium(ctx context.Context, userID string, premium bool) error {
+	query := `
+		UPDATE users
+		SET is_premium = $2,
+		    updated_at = timezone('utc'::text, now())
+		WHERE id = $1
+	`
+	tag, err := r.db.Exec(ctx, query, userID, premium)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }
 
 func (r *UserRepository) UpdateUserProfile(ctx context.Context, user *models.User) error {
@@ -153,7 +175,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 	query := `
 		INSERT INTO users (id, full_name, phone_number, email, password_hash, language, sms_enabled)
 		VALUES ($1, $2, $3, NULLIF($4, ''), $5, $6, $7)
-		RETURNING created_at, updated_at, is_premium
+		RETURNING created_at, updated_at, is_premium, is_admin
 	`
 	return r.db.QueryRow(ctx, query,
 		user.ID,
@@ -163,5 +185,5 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 		user.PasswordHash,
 		user.Language,
 		user.SMSEnabled,
-	).Scan(&user.CreatedAt, &user.UpdatedAt, &user.IsPremium)
+	).Scan(&user.CreatedAt, &user.UpdatedAt, &user.IsPremium, &user.IsAdmin)
 }

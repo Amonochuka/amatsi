@@ -13,6 +13,7 @@ type User struct {
 	Language     string    `json:"language" db:"language"`
 	SMSEnabled   bool      `json:"sms_enabled" db:"sms_enabled"`
 	IsPremium    bool      `json:"is_premium" db:"is_premium"`
+	IsAdmin      bool      `json:"is_admin" db:"is_admin"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }

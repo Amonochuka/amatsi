@@ -62,6 +62,7 @@ func RegisterRoutes(
 	)
 	usageSvc := services.NewUsageService(recRepo, atClient, cfg.RecommendationsDailyLimit)
 	optoutSvc := services.NewOptOutService(userRepo, phoneRepo)
+	adminSvc := services.NewAdminService(userRepo)
 
 	// --- Handlers ---------------------------------------------------------
 	authHandler := handlers.NewAuthHandler(authSvc)
@@ -72,6 +73,7 @@ func RegisterRoutes(
 	alertHandler := handlers.NewAlertHandler(farmRepo, userRepo, alertSvc)
 	recommendationHandler := handlers.NewRecommendationHandler(farmRepo, recRepo, recSvc)
 	smsInboundHandler := handlers.NewSMSInboundHandler(optoutSvc)
+	adminHandler := handlers.NewAdminHandler(adminSvc)
 
 	// Public SMS webhook for inbound replies (STOP/START opt-out). Africa's
 	// Talking calls this without a JWT, so it is registered outside the
@@ -115,5 +117,7 @@ func RegisterRoutes(
 
 		api.PUT("/auth/profile", authHandler.UpdateProfile)
 		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), authHandler.ChangePassword)
+
+		api.POST("/admin/premium", adminHandler.SetPremium)
 	}
 }

@@ -74,6 +74,7 @@ All `/api` routes except signup/login require a Bearer JWT.
 | POST   | `/api/recommendations/generate` | Generate recommendation via AI service        |
 | GET    | `/api/alerts/history`           | Auto-sent SMS alert history                   |
 | POST   | `/api/sms/inbound`              | **Public** webhook: SMS reply opt-out (STOP/START) |
+| POST   | `/api/admin/premium`            | Admin-only: grant/revoke premium for a user (`user_id`, `is_premium`) |
 
 All password/reset-style and SMS endpoints are rate-limited via Redis
 (`RateLimitFromEnv` for general, `StrictRateLimitFromEnv` for
@@ -111,6 +112,15 @@ the Supabase dashboard is needed.
 - **Recommendations**: the AI service is treated as an upstream dependency; the
   backend persists each recommendation and queues an SMS when the action is
   `IRRIGATE` (`internal/services/recommendation_service.go`).
+- **Admin**: `internal/services/admin_service.go` enforces authorization on
+  operator endpoints against the caller's `is_admin` flag on the `users` table
+  (migration `014_add_is_admin.sql`). `POST /api/admin/premium` flips
+  `is_premium`, which changes SMS→MQTT auto-pump behaviour in the recommend
+  path — the manual upgrade path behind the Settings "Upgrade to Premium"
+  `mailto` link. To promote an operator:
+  ```sql
+  UPDATE users SET is_admin = true WHERE phone_number = '...';
+  ```
 
 ## Security model (important — read this)
 
