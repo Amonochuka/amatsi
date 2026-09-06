@@ -201,7 +201,7 @@ export default function IrrigationPage() {
         </div>
       </div>
 
-      <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-6 text-sm text-emerald-800">
+      <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-6 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:border-emerald-500/40">
         {moistureStatus === "low" ? (
           <p><strong>Action needed:</strong> Soil moisture is low. Consider irrigating this farm soon to prevent yield loss.</p>
         ) : moistureStatus === "optimum" ? (
