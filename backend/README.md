@@ -83,9 +83,22 @@ query params (`from`, `text`). See its handler in `internal/api/handlers/sms_inb
 
 ## Migrations
 
-Run the numbered SQL files under `backend/migrations/` in order against the
-database. They are idempotent (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`), so
-re-running them is safe.
+Migrations run **automatically** on startup (see `cmd/server/main.go` and
+`internal/migrations/migrations.go`). The numbered SQL files under
+`backend/migrations/` are embedded into the binary (`embed.go`) and applied with
+`pgx` against the `SUPABASE_DB_URL` database, in ascending filename order, each
+inside its own transaction.
+
+- Already-applied files are tracked in a `schema_migrations` table and skipped,
+  so re-runs are safe.
+- Each migration is idempotent (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`).
+- Two demo files are **skipped automatically** in hosted deploys
+  (`skipSeedFiles` in `migrations.go`): `000_auth_bootstrap.sql` and
+  `006_seed_data.sql`.
+
+To apply a schema change: add a new `NNN_*.sql` file, then deploy/restart the
+backend — it applies the pending migration and records it. No manual SQL step in
+the Supabase dashboard is needed.
 
 ## Architecture notes
 
