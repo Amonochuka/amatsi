@@ -2,11 +2,16 @@ package repository
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/amatsi/backend/internal/models"
 )
+
+// digitsOnly matches anything that is not a digit; replacing with "" yields
+// the bare phone digits used for comparisons.
+var digitsOnly = regexp.MustCompile(`[^0-9]`)
 
 type UserRepository struct {
 	db *pgxpool.Pool
@@ -43,15 +48,20 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*models.Us
 	return user, nil
 }
 
+// GetUserByPhone looks up a user by phone number after stripping non-digit
+// characters from both sides, so "0700000000", "254700000000" and
+// "+254700000000" all resolve to the same account (mirrors how inbound SMS
+// replies are resolved).
 func (r *UserRepository) GetUserByPhone(ctx context.Context, phone string) (*models.User, error) {
+	digits := digitsOnly.ReplaceAllString(phone, "")
 	query := `
 		SELECT id, full_name, phone_number, COALESCE(email, ''), COALESCE(password_hash, ''),
 		       COALESCE(language, 'en'), COALESCE(sms_enabled, true), is_premium, is_admin, created_at, updated_at
 		FROM users
-		WHERE phone_number = $1
+		WHERE regexp_replace(phone_number, '[^0-9]', '', 'g') = $1
 	`
 	user := &models.User{}
-	err := r.db.QueryRow(ctx, query, phone).Scan(
+	err := r.db.QueryRow(ctx, query, digits).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.PhoneNumber,
