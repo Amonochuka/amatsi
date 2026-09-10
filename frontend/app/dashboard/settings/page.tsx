@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI } from "@/lib/api/client";
+import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI, adminAPI } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
 import type { Language, Theme, Usage, UserPhone } from "@/types";
 
@@ -82,6 +82,12 @@ export default function SettingsPage() {
 
 	// 13.7 — real usage from the backend (/usage)
 	const [usage, setUsage] = useState<Usage | null>(null);
+
+	// admin — reseed demo data (/admin/reseed)
+	const [reseedStatus, setReseedStatus] = useState<
+		{ ok: boolean; message: string } | null
+	>(null);
+	const [reseedSaving, setReseedSaving] = useState(false);
 
 	useEffect(() => {
 		usageAPI
@@ -198,6 +204,21 @@ export default function SettingsPage() {
 			setRemovingPhone(null);
 		} catch {
 			setPhoneError("Failed to remove phone.");
+		}
+	};
+
+	// admin — re-run the demo seed so Peter Pana + demo data are recreated.
+	const handleReseed = async () => {
+		setReseedStatus(null);
+		setReseedSaving(true);
+		try {
+			const res = await adminAPI.reseed();
+			setReseedStatus({ ok: true, message: res.message || "Demo data reseeded." });
+		} catch (err: any) {
+			const msg = err?.response?.data?.error || "Reseed failed.";
+			setReseedStatus({ ok: false, message: msg });
+		} finally {
+			setReseedSaving(false);
 		}
 	};
 
@@ -447,6 +468,27 @@ export default function SettingsPage() {
 						</div>
 					</div>
 				</div>
+
+				{/* admin — reseed demo data (admin account only) */}
+				{user?.is_admin && (
+				<div className={`${SECTION_CLASSES} border-brand-accent lg:col-span-2`}>
+					<h2 className={SECTION_TITLE}>Admin</h2>
+					<p className="text-sm text-stone-500 mb-4">
+						Re-run the demo seed to recreate Peter Pana and the demo farms, weather,
+						recommendations and alerts. This wipes and rebuilds the demo dataset.
+					</p>
+					<div className="flex flex-wrap items-center gap-3">
+						<Button onClick={handleReseed} disabled={reseedSaving}>
+							{reseedSaving ? "Reseeding..." : "Reseed demo data"}
+						</Button>
+						{reseedStatus && (
+							<p className={`text-sm ${reseedStatus.ok ? "text-emerald-700" : "text-rose-600"}`}>
+								{reseedStatus.message}
+							</p>
+						)}
+					</div>
+				</div>
+				)}
 
 				{/* 8.12 / 8.14 / 8.15 — support & about */}
 				<div className={SECTION_CLASSES}>

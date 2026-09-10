@@ -259,3 +259,13 @@ export const phoneAPI = {
 export const usageAPI = {
 	get: () => apiClient.get<Usage>("/usage").then((r) => r.data),
 };
+
+// ---------------------------------------------------------------------------
+// Admin (routes.go: /admin/reseed) — admin-only
+// ---------------------------------------------------------------------------
+export const adminAPI = {
+	reseed: () =>
+		apiClient
+			.post<{ status: string; message: string }>("/admin/reseed")
+			.then((r) => r.data),
+};
