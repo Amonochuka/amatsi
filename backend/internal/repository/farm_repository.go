@@ -39,7 +39,7 @@ func (r *FarmRepository) CreateFarm(ctx context.Context, farm *models.Farm) erro
 
 func (r *FarmRepository) GetFarmByID(ctx context.Context, id string) (*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, tank_capacity_liters, planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
 		FROM farms
 		WHERE id = $1
 	`
@@ -68,7 +68,7 @@ func (r *FarmRepository) GetFarmByID(ctx context.Context, id string) (*models.Fa
 
 func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([]*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, tank_capacity_liters, planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
 		FROM farms
 		WHERE user_id = $1
 	`
@@ -110,7 +110,7 @@ func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([
 // whole farm population without a user context.
 func (r *FarmRepository) ListAllFarms(ctx context.Context) ([]*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, tank_capacity_liters, planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
 		FROM farms
 		ORDER BY created_at ASC
 	`

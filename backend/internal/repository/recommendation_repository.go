@@ -32,7 +32,7 @@ func (r *RecommendationRepository) CreateRecommendation(ctx context.Context, rec
 
 func (r *RecommendationRepository) GetLatestRecommendation(ctx context.Context, farmID string) (*models.Recommendation, error) {
 	query := `
-		SELECT id, farm_id, action, reason, water_saved_estimate, created_at
+		SELECT id, farm_id, action, reason, COALESCE(water_saved_estimate, 0), created_at
 		FROM recommendations
 		WHERE farm_id = $1
 		ORDER BY created_at DESC
@@ -55,7 +55,7 @@ func (r *RecommendationRepository) GetLatestRecommendation(ctx context.Context, 
 
 func (r *RecommendationRepository) GetRecommendationsByFarm(ctx context.Context, farmID string) ([]*models.Recommendation, error) {
 	query := `
-		SELECT id, farm_id, action, reason, water_saved_estimate, created_at
+		SELECT id, farm_id, action, reason, COALESCE(water_saved_estimate, 0), created_at
 		FROM recommendations
 		WHERE farm_id = $1
 		ORDER BY created_at DESC
