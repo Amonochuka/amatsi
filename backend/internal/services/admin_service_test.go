@@ -9,7 +9,7 @@ import (
 // TestAdminServiceConstructor verifies wiring so a future change that breaks
 // the constructor signature is caught without a live database.
 func TestAdminServiceConstructor(t *testing.T) {
-	svc := NewAdminService(repository.NewUserRepository(nil))
+	svc := NewAdminService(repository.NewUserRepository(nil), nil, nil)
 	if svc == nil {
 		t.Fatal("NewAdminService() = nil")
 	}

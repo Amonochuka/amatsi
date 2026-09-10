@@ -57,3 +57,27 @@ func (h *AdminHandler) SetPremium(c *gin.Context) {
 		"is_premium": *input.IsPremium,
 	})
 }
+
+// Reseed re-runs the full demo seed SQL (6 Peter Pana farms, 5 secondary
+// farmers, weather, recommendations, alerts). Only admins may call this.
+func (h *AdminHandler) Reseed(c *gin.Context) {
+	callerID, ok := middleware.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if err := h.svc.Reseed(c.Request.Context(), callerID); err != nil {
+		switch {
+		case errors.Is(err, services.ErrAdminRequired):
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin privileges required"})
+		case errors.Is(err, services.ErrAccountNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "reseed failed: " + err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "demo data reseeded"})
+}

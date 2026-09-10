@@ -58,7 +58,16 @@ UPDATE public.users
 --     this script always converges to exactly the dataset below.
 --     Only demo rows (fixed demo UUIDs) are touched — real accounts
 --     are never matched.
+--     Also cleans up the very first seed farm (11111111-...) under
+--     Peter's own user id so re-seeds don't leave stale rows.
 -- ────────────────────────────────────────────────────────────────
+-- Clean old Peter farm (11111111-...) from earliest seed versions
+DELETE FROM public.alerts          WHERE farm_id = '11111111-1111-1111-1111-111111111111';
+DELETE FROM public.recommendations WHERE farm_id = '11111111-1111-1111-1111-111111111111';
+DELETE FROM public.weather         WHERE farm_id = '11111111-1111-1111-1111-111111111111';
+DELETE FROM public.farms           WHERE id      = '11111111-1111-1111-1111-111111111111';
+
+-- Clean secondary users 0002…0020 (from earlier seed versions)
 DELETE FROM public.alerts
  WHERE farm_id IN (SELECT id FROM public.farms WHERE user_id IN
    ('00000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000003',

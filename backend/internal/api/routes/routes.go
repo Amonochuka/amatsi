@@ -12,6 +12,8 @@ import (
 	"github.com/amatsi/backend/internal/config"
 	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
+
+	backend "github.com/amatsi/backend"
 )
 
 // RegisterRoutes builds the dependency graph once (composition root) and binds
@@ -62,7 +64,7 @@ func RegisterRoutes(
 	)
 	usageSvc := services.NewUsageService(recRepo, atClient, cfg.RecommendationsDailyLimit)
 	optoutSvc := services.NewOptOutService(userRepo, phoneRepo)
-	adminSvc := services.NewAdminService(userRepo)
+	adminSvc := services.NewAdminService(userRepo, db, backend.MigrationFS)
 
 	// --- Handlers ---------------------------------------------------------
 	authHandler := handlers.NewAuthHandler(authSvc)
@@ -119,5 +121,6 @@ func RegisterRoutes(
 		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), authHandler.ChangePassword)
 
 		api.POST("/admin/premium", adminHandler.SetPremium)
+		api.POST("/admin/reseed", adminHandler.Reseed)
 	}
 }

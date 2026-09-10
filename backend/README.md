@@ -75,6 +75,7 @@ All `/api` routes except signup/login require a Bearer JWT.
 | GET    | `/api/alerts/history`           | Auto-sent SMS alert history                   |
 | POST   | `/api/sms/inbound`              | **Public** webhook: SMS reply opt-out (STOP/START) |
 | POST   | `/api/admin/premium`            | Admin-only: grant/revoke premium for a user (`user_id`, `is_premium`) |
+| POST   | `/api/admin/reseed`             | Admin-only: re-run full demo seed SQL (Peter Pana + 5 farmers, farms, weather, recs, alerts) |
 
 All password/reset-style and SMS endpoints are rate-limited via Redis
 (`RateLimitFromEnv` for general, `StrictRateLimitFromEnv` for
@@ -117,7 +118,10 @@ the Supabase dashboard is needed.
   (migration `014_add_is_admin.sql`). `POST /api/admin/premium` flips
   `is_premium`, which changes SMS→MQTT auto-pump behaviour in the recommend
   path — the manual upgrade path behind the Settings "Upgrade to Premium"
-  `mailto` link. To promote an operator:
+  `mailto` link. `POST /api/admin/reseed` re-runs `006_seed_data.sql` against
+  the database in a single transaction (Peter Pana + 5 secondary farmers,
+  farms, weather, recommendations, alerts). Both endpoints are admin-only.
+  To promote an operator:
   ```sql
   UPDATE users SET is_admin = true WHERE phone_number = '...';
   ```
