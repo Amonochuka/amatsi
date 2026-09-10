@@ -1,8 +1,8 @@
 -- ================================================================
 -- AMATSI — Demo Seed Data
 --
--- ONE super user:  Peter Pana  (+254700000000 / qwerty1234@#)
---   - admin + premium
+-- ONE demo user:  Peter Pana  (+254700000000 / qwerty1234@#)
+--   - premium (NOT admin)
 --   - 6 farms across Kenya with different crops & conditions so
 --     every page (dashboard, farms, irrigation, planner, alerts,
 --     settings) is fully populated from a single login.
@@ -10,6 +10,11 @@
 -- features and switch-accounts still have something to work with.
 --
 -- All users share the same password: qwerty1234@#
+--
+-- The operator/admin account is a SEPARATE user created at backend
+-- startup from ADMIN_BOOTSTRAP_PHONE / ADMIN_BOOTSTRAP_PASSWORD
+-- (see internal/services/admin_service.go BootstrapAdmin). Use that
+-- account to call POST /api/admin/reseed; it is never part of the seed.
 -- ================================================================
 
 -- Password bcrypt hash for qwerty1234@# (same for every demo user)
@@ -38,7 +43,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.users (id, full_name, phone_number, email, password_hash, language, sms_enabled, is_premium, is_admin)
 SELECT '00000000-0000-0000-0000-000000000001', 'Peter Pana', '+254700000000', 'demo@amatsi.com',
        '$2b$10$abFYy8eZnvKof.GolhGO0uiURlcykr8rGbxaF/TxsYiNZVIDEmvXy',
-       'en', true, true, true
+       'en', true, true, false
 WHERE NOT EXISTS (SELECT 1 FROM public.users WHERE phone_number = '+254700000000');
 
 UPDATE public.users
@@ -48,7 +53,7 @@ UPDATE public.users
        language = 'en',
        sms_enabled = true,
        is_premium = true,
-       is_admin = true
+       is_admin = false
  WHERE phone_number = '+254700000000';
 
 -- ────────────────────────────────────────────────────────────────

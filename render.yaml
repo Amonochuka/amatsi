@@ -56,3 +56,9 @@ services:
         value: AMATSI
       - key: AFRICA_TALKING_SANDBOX
         value: "true"
+      - key: ADMIN_BOOTSTRAP_PHONE
+        sync: false
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: ADMIN_BOOTSTRAP_NAME
+        value: "AMATSI Admin"

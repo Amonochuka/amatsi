@@ -197,3 +197,23 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 		user.SMSEnabled,
 	).Scan(&user.CreatedAt, &user.UpdatedAt, &user.IsPremium, &user.IsAdmin)
 }
+
+// UpsertBootstrapAdmin ensures an admin account exists by phone. If a user
+// with that phone already exists, their password, name, and is_admin flag are
+// updated. Otherwise a new account is created. This runs unconditionally on
+// every startup when ADMIN_BOOTSTRAP_PHONE + ADMIN_BOOTSTRAP_PASSWORD are set,
+// so you can always log in as admin after a fresh deploy.
+func (r *UserRepository) UpsertBootstrapAdmin(ctx context.Context, phone, name, passwordHash string) error {
+	query := `
+		INSERT INTO users (id, full_name, phone_number, email, password_hash, language, sms_enabled, is_premium, is_admin)
+		VALUES (gen_random_uuid(), $1, $2, NULL, $3, 'en', true, true, true)
+		ON CONFLICT (phone_number) DO UPDATE
+		SET full_name    = EXCLUDED.full_name,
+		    password_hash = EXCLUDED.password_hash,
+		    is_admin      = true,
+		    is_premium    = true,
+		    updated_at    = timezone('utc'::text, now())
+	`
+	_, err := r.db.Exec(ctx, query, name, phone, passwordHash)
+	return err
+}

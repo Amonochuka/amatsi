@@ -121,7 +121,11 @@ the Supabase dashboard is needed.
   `mailto` link. `POST /api/admin/reseed` re-runs `006_seed_data.sql` against
   the database in a single transaction (Peter Pana + 5 secondary farmers,
   farms, weather, recommendations, alerts). Both endpoints are admin-only.
-  To promote an operator:
+  The operator account is **separate from the demo seed**: if
+  `ADMIN_BOOTSTRAP_PHONE` and `ADMIN_BOOTSTRAP_PASSWORD` are set, the backend
+  ensures that account exists (admin + premium, hashed from the env var) on
+  every startup — so a fresh deploy always has a working admin login to call
+  `reseed` with. To promote an operator without env vars:
   ```sql
   UPDATE users SET is_admin = true WHERE phone_number = '...';
   ```

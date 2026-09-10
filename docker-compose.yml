@@ -70,6 +70,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       AI_SERVICE_URL: http://ai-service:8000
       MQTT_BROKER_URL: mqtt://mosquitto:1883
+      ADMIN_BOOTSTRAP_PHONE: "+254700000099"
+      ADMIN_BOOTSTRAP_PASSWORD: admin1234@#
+      ADMIN_BOOTSTRAP_NAME: "AMATSI Admin"
     ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }

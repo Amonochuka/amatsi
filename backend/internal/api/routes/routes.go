@@ -12,8 +12,6 @@ import (
 	"github.com/amatsi/backend/internal/config"
 	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
-
-	backend "github.com/amatsi/backend"
 )
 
 // RegisterRoutes builds the dependency graph once (composition root) and binds
@@ -27,6 +25,7 @@ func RegisterRoutes(
 	asynqClient *asynq.Client,
 	mqttClient *clients.MQTTClient,
 	atClient *clients.AfricasTalkingClient,
+	adminSvc *services.AdminService,
 ) {
 	// --- Repositories -----------------------------------------------------
 	userRepo := repository.NewUserRepository(db)
@@ -64,7 +63,6 @@ func RegisterRoutes(
 	)
 	usageSvc := services.NewUsageService(recRepo, atClient, cfg.RecommendationsDailyLimit)
 	optoutSvc := services.NewOptOutService(userRepo, phoneRepo)
-	adminSvc := services.NewAdminService(userRepo, db, backend.MigrationFS)
 
 	// --- Handlers ---------------------------------------------------------
 	authHandler := handlers.NewAuthHandler(authSvc)

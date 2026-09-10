@@ -29,6 +29,7 @@ import (
 	"github.com/amatsi/backend/internal/queue"
 	"github.com/amatsi/backend/internal/queue/workers"
 	"github.com/amatsi/backend/internal/repository"
+	"github.com/amatsi/backend/internal/services"
 )
 
 func main() {
@@ -63,6 +64,17 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Database migrations applied")
+
+	// Ensure the operator account exists (if ADMIN_BOOTSTRAP_PHONE +
+	// ADMIN_BOOTSTRAP_PASSWORD are set) so an admin can always log in, even
+	// on a fresh deployment where the demo seed migration is skipped.
+	adminSvc := services.NewAdminService(repository.NewUserRepository(dbPool), dbPool, backend.MigrationFS)
+	if cfg.AdminBootstrapPhone != "" && cfg.AdminBootstrapPassword != "" {
+		if err := adminSvc.BootstrapAdmin(ctx, cfg.AdminBootstrapPhone, cfg.AdminBootstrapPassword, cfg.AdminBootstrapName); err != nil {
+			slog.Error("Failed to bootstrap admin", slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+	}
 
 	redisClient, err := clients.NewRedisClient(ctx, cfg.RedisURL)
 	if err != nil {
@@ -120,7 +132,7 @@ func main() {
 		})
 	})
 
-	routes.RegisterRoutes(router, cfg, dbPool, redisClient, asynqClient, mqttClient, atClient)
+	routes.RegisterRoutes(router, cfg, dbPool, redisClient, asynqClient, mqttClient, atClient, adminSvc)
 
 	if asynqServer != nil {
 		smsProcessor := workers.NewSMSProcessor(atClient, repository.NewAlertRepository(dbPool))

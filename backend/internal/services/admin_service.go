@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/amatsi/backend/internal/repository"
 )
@@ -53,6 +55,22 @@ func (s *AdminService) SetPremium(ctx context.Context, callerID, targetUserID st
 	}
 
 	return s.userRepo.SetPremium(ctx, targetUserID, premium)
+}
+
+// BootstrapAdmin ensures the operator account configured via
+// ADMIN_BOOTSTRAP_PHONE / ADMIN_BOOTSTRAP_PASSWORD exists and is an admin.
+// It runs on every startup (when configured) so a fresh deployment always has
+// a working admin login to call Reseed with. Idempotent and safe to re-run.
+func (s *AdminService) BootstrapAdmin(ctx context.Context, phone, password, name string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash admin password: %w", err)
+	}
+	if err := s.userRepo.UpsertBootstrapAdmin(ctx, phone, name, string(hash)); err != nil {
+		return fmt.Errorf("failed to bootstrap admin: %w", err)
+	}
+	slog.Info("Admin account ensured", slog.String("phone", phone))
+	return nil
 }
 
 // Reseed executes the full demo seed SQL against the database. Only admins

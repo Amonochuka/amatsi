@@ -63,6 +63,13 @@ type AppConfig struct {
 
 	// Recommendation scheduler
 	RecommendationCron string
+
+	// Admin bootstrap — if both AdminBootstrapPhone and AdminBootstrapPassword
+	// are set, the admin account is ensured to exist on every startup so you
+	// can always log in and call POST /api/admin/reseed to populate demo data.
+	AdminBootstrapPhone    string
+	AdminBootstrapPassword string
+	AdminBootstrapName     string
 }
 
 // Load reads environment variables from .env (if present) and os.Getenv,
@@ -93,6 +100,11 @@ func Load() (*AppConfig, error) {
 		AfricaTalkingUsername: os.Getenv("AFRICA_TALKING_USERNAME"),
 		RedisURL:              os.Getenv("REDIS_URL"),
 		AIServiceURL:          os.Getenv("AI_SERVICE_URL"),
+
+		// Admin bootstrap (optional — only runs when both phone + password are set)
+		AdminBootstrapPhone:    os.Getenv("ADMIN_BOOTSTRAP_PHONE"),
+		AdminBootstrapPassword: os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"),
+		AdminBootstrapName:     getEnvOrDefault("ADMIN_BOOTSTRAP_NAME", "Admin"),
 	}
 
 	// Parse allowed origins (comma-separated)
