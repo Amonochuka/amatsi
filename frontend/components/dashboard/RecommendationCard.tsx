@@ -13,7 +13,7 @@ import { formatLiters } from "@/lib/utils/formatNumber";
 
 interface RecommendationCardProps {
 	recommendation: DisplayRecommendation;
-	recipientCount?: number;
+	recipientCount: number;
 	smsCreditsRemaining?: number;
 	onSendSMS?: () => void;
 }
@@ -27,7 +27,7 @@ const ACTION_STYLES: Record<DisplayRecommendation["action"], { badge: string; ct
 
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
 	recommendation,
-	recipientCount = 2,
+	recipientCount,
 	smsCreditsRemaining,
 	onSendSMS,
 }) => {

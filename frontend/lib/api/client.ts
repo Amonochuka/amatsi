@@ -183,6 +183,10 @@ export const authAPI = {
 		apiClient.post<AuthResponse>("/auth/signup", payload).then((r) => r.data),
 	logout: () =>
 		apiClient.post("/auth/logout", { refresh_token: getRefreshToken() }).then((r) => r.data),
+	deleteAccount: () =>
+		apiClient
+			.delete("/auth/account", { data: { refresh_token: getRefreshToken() } })
+			.then((r) => r.data),
 	updateProfile: (payload: {
 		full_name?: string;
 		phone_number?: string;

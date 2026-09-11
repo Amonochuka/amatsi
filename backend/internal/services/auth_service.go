@@ -178,6 +178,32 @@ func (s *AuthService) Logout(ctx context.Context, accessJTI string, accessExp ti
 	return nil
 }
 
+// DeleteAccount revokes the caller's tokens (best-effort, same as Logout) and
+// permanently removes the account and all of its data from the database.
+func (s *AuthService) DeleteAccount(ctx context.Context, userID, accessJTI string, accessExp time.Time, refreshToken string) error {
+	if _, err := s.userRepo.GetUserByID(ctx, userID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrAccountNotFound
+		}
+		return err
+	}
+
+	// Revoke the token pair belonging to the deleted session so an already
+	// issued pair cannot outlive the account. Best-effort — the DB deletion
+	// below is the source of truth.
+	if accessJTI != "" && !accessExp.IsZero() {
+		_ = auth.Revoke(ctx, s.rdb, accessJTI, auth.TokenTypeAccess, accessExp)
+	}
+	if strings.TrimSpace(refreshToken) != "" {
+		if claims, jti, expiresAt, err := s.ValidateRefreshToken(ctx, refreshToken); err == nil {
+			_ = auth.Revoke(ctx, s.rdb, jti, auth.TokenTypeRefresh, expiresAt)
+			_ = claims
+		}
+	}
+
+	return s.userRepo.DeleteAccount(ctx, userID)
+}
+
 // UpdateProfile applies the provided profile changes and returns the saved user.
 func (s *AuthService) UpdateProfile(ctx context.Context, userID string, changes ProfileChanges) (*models.User, error) {
 	user, err := s.userRepo.GetUserByID(ctx, userID)

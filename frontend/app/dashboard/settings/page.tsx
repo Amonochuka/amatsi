@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI, adminAPI } from "@/lib/api/client";
+import { authAPI, phoneAPI, setStoredUser, getStoredUser, usageAPI, adminAPI, clearSession } from "@/lib/api/client";
 import { isValidPhone } from "@/lib/utils/validators";
 import type { Language, Theme, Usage, UserPhone } from "@/types";
 
@@ -34,7 +34,7 @@ const SECTION_TITLE = "font-serif text-xl font-bold mb-4 text-stone-900";
 export default function SettingsPage() {
 
 	// 8.1 — profile state (initialized from the real logged-in user)
-	const { user, logout, refreshProfile } = useAuth();
+	const { user, refreshProfile } = useAuth();
 	const [profileSaving, setProfileSaving] = useState(false);
 
 	const [profile, setProfile] = useState({
@@ -76,6 +76,8 @@ export default function SettingsPage() {
 
 	// 8.11 — delete account confirmation
 	const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+	const [deletingAccount, setDeletingAccount] = useState(false);
+	const [accountError, setAccountError] = useState<string | null>(null);
 
 	// 8.13 — sync preference
 	const [autoSync, setAutoSync] = useState(true);
@@ -523,12 +525,21 @@ export default function SettingsPage() {
 							<Button
 								variant="danger"
 								size="sm"
+								disabled={deletingAccount}
 								onClick={async () => {
-									await logout();
-									window.location.href = "/";
+									setDeletingAccount(true);
+									try {
+										await authAPI.deleteAccount().finally(clearSession);
+										window.location.href = "/";
+									} catch {
+										setConfirmDeleteAccount(false);
+										setAccountError("Could not delete account. Please try again.");
+									} finally {
+										setDeletingAccount(false);
+									}
 								}}
 							>
-								Yes, delete my account
+								{deletingAccount ? "Deleting…" : "Yes, delete my account"}
 							</Button>
 							<Button variant="ghost" size="sm" onClick={() => setConfirmDeleteAccount(false)}>
 								Cancel
@@ -539,6 +550,7 @@ export default function SettingsPage() {
 							Delete account
 						</Button>
 					)}
+					{accountError ? <p className="mt-2 text-sm text-rose-600">{accountError}</p> : null}
 				</div>
 			</div>
 		</div>

@@ -198,6 +198,35 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 	).Scan(&user.CreatedAt, &user.UpdatedAt, &user.IsPremium, &user.IsAdmin)
 }
 
+// DeleteAccount removes a user and every row that references them, in FK-safe
+// order, inside a single transaction: weather/recommendations/alerts for the
+// user's farms, then the farms, their extra SMS phones, the profile row, and
+// finally the matching auth.users entry (users.id references auth.users.id).
+func (r *UserRepository) DeleteAccount(ctx context.Context, userID string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	statements := []string{
+		`DELETE FROM weather WHERE farm_id IN (SELECT id FROM farms WHERE user_id = $1)`,
+		`DELETE FROM recommendations WHERE farm_id IN (SELECT id FROM farms WHERE user_id = $1)`,
+		`DELETE FROM alerts WHERE farm_id IN (SELECT id FROM farms WHERE user_id = $1)`,
+		`DELETE FROM farms WHERE user_id = $1`,
+		`DELETE FROM user_phones WHERE user_id = $1`,
+		`DELETE FROM users WHERE id = $1`,
+		`DELETE FROM auth.users WHERE id = $1`,
+	}
+	for _, stmt := range statements {
+		if _, err := tx.Exec(ctx, stmt, userID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 // UpsertBootstrapAdmin ensures an admin account exists by phone. If a user
 // with that phone already exists, their password, name, and is_admin flag are
 // updated. Otherwise a new account is created. This runs unconditionally on

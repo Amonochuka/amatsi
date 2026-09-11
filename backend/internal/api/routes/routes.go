@@ -117,6 +117,7 @@ func RegisterRoutes(
 
 		api.PUT("/auth/profile", authHandler.UpdateProfile)
 		api.POST("/auth/change-password", middleware.StrictRateLimitFromEnv(rdb), authHandler.ChangePassword)
+		api.DELETE("/auth/account", authHandler.DeleteAccount)
 
 		api.POST("/admin/premium", adminHandler.SetPremium)
 		api.POST("/admin/reseed", adminHandler.Reseed)

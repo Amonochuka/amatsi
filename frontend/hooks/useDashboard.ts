@@ -3,12 +3,21 @@
 /*
  * hooks/useDashboard.ts — LOAD REAL DASHBOARD DATA
  *
- * Fetches the first farm for the logged-in user, then loads weather, soil,
- * recommendations and alerts. Returns honest empty states when there is no
- * farm or data is unavailable — no mock fallbacks.
+ * Fetches the farms for the logged-in user, then loads weather, soil,
+ * recommendations and alerts for the selected farm (defaults to the first
+ * one). Returns honest empty states when there is no farm or data is
+ * unavailable — no mock fallbacks. Also resolves the number of SMS recipients
+ * so UI copy reflects the real phone count, not a hardcoded guess.
  */
 import { useEffect, useState } from "react";
-import { farmAPI, weatherAPI, soilAPI, recommendationAPI, alertAPI } from "@/lib/api/client";
+import {
+	farmAPI,
+	weatherAPI,
+	soilAPI,
+	recommendationAPI,
+	alertAPI,
+	phoneAPI,
+} from "@/lib/api/client";
 import {
 	mapWeather,
 	mapRecommendation,
@@ -17,8 +26,25 @@ import {
 	mapSoil,
 	mapTankLevel,
 } from "@/lib/api/transform";
+import type { Farm } from "@/types";
 
 export interface DashboardData {
+	loading: boolean;
+	error: string | null;
+	farmId: string | null;
+	hasFarm: boolean;
+	farms: Farm[];
+	weather: ReturnType<typeof mapWeather>;
+	soil: ReturnType<typeof mapSoil>[];
+	recommendation: ReturnType<typeof mapRecommendation>;
+	alerts: ReturnType<typeof mapAlerts>;
+	waterUsage: ReturnType<typeof mapWaterUsage>;
+	tank: ReturnType<typeof mapTankLevel> | null;
+	recipientCount: number;
+	onSendSMS: (() => void) | null;
+}
+
+interface FarmData {
 	loading: boolean;
 	error: string | null;
 	farmId: string | null;
@@ -32,7 +58,7 @@ export interface DashboardData {
 	onSendSMS: (() => void) | null;
 }
 
-const EMPTY: DashboardData = {
+const EMPTY_FARM_DATA: FarmData = {
 	loading: true,
 	error: null,
 	farmId: null,
@@ -46,50 +72,76 @@ const EMPTY: DashboardData = {
 	onSendSMS: null,
 };
 
-export function useDashboard(): DashboardData {
-	const [data, setData] = useState<DashboardData>(EMPTY);
+export function useDashboard(farmId?: string | null): DashboardData {
+	const [farms, setFarms] = useState<Farm[]>([]);
+	const [recipientCount, setRecipientCount] = useState(1);
+	const [farmData, setFarmData] = useState<FarmData>(EMPTY_FARM_DATA);
 
+	// Load the farm list + SMS recipients once. The recipient count is the
+	// account's primary phone plus every registered (non-opted-out) extra.
 	useEffect(() => {
 		let cancelled = false;
 		const run = async () => {
-			setData((d) => ({ ...d, loading: true, error: null }));
+			try {
+				const [farmRes, phoneRes] = await Promise.allSettled([
+					farmAPI.list(),
+					phoneAPI.list(),
+				]);
+				if (cancelled) return;
+				const farmList = farmRes.status === "fulfilled" ? (farmRes.value ?? []) : [];
+				const extras = phoneRes.status === "fulfilled" ? (phoneRes.value ?? []) : [];
+				setFarms(farmList);
+				setRecipientCount(extras.length + 1);
+				if (farmList.length === 0) {
+					setFarmData({ ...EMPTY_FARM_DATA, loading: false, hasFarm: false });
+				}
+			} catch {
+				if (!cancelled) {
+					setFarms([]);
+					setFarmData({ ...EMPTY_FARM_DATA, loading: false, error: "Could not load dashboard data right now." });
+				}
+			}
+		};
+		run();
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	const selectedFarmId =
+		farmId && farms.some((f) => f.id === farmId)
+			? farmId
+			: farms.length > 0
+				? farms[0].id
+				: null;
+
+	// Load per-farm data whenever the selected farm changes.
+	useEffect(() => {
+		let cancelled = false;
+		const farm = farms.find((f) => f.id === selectedFarmId);
+		if (!farm) {
+			if (farms.length === 0) {
+				setFarmData({ ...EMPTY_FARM_DATA, loading: false, hasFarm: false });
+			}
+			return;
+		}
+
+		const run = async () => {
+			setFarmData((d) => ({ ...d, loading: true, error: null, farmId: farm.id, hasFarm: true }));
 
 			try {
-				const farms = (await farmAPI.list()) ?? [];
-				if (cancelled) return;
-				if (!farms || farms.length === 0) {
-					// No farm registered yet — show an honest empty state rather than
-					// fake metrics. Water usage is safe to show as zeros.
-					setData({
-						loading: false,
-						error: null,
-						farmId: null,
-						hasFarm: false,
-						weather: null,
-						soil: [],
-						recommendation: null,
-						alerts: [],
-						waterUsage: [],
-						tank: null,
-						onSendSMS: null,
-					});
-					return;
-				}
-
-				const farm = farms[0];
 				const [weatherRes, soilRes, recs, alerts] = await Promise.allSettled([
 					weatherAPI.current(farm.id),
 					soilAPI.current(farm.id),
 					recommendationAPI.history(farm.id),
 					alertAPI.history(farm.id),
 				]);
-
 				if (cancelled) return;
 
 				const weather =
 					weatherRes.status === "fulfilled" ? mapWeather(weatherRes.value) : null;
 				const soil =
-					soilRes.status === "fulfilled" && soilRes.value.data
+					soilRes.status === "fulfilled" && soilRes.value?.data
 						? [mapSoil(soilRes.value, farm)]
 						: [];
 				const recommendation =
@@ -103,7 +155,7 @@ export function useDashboard(): DashboardData {
 
 				const recAction = recommendation?.action;
 
-				setData({
+				setFarmData({
 					loading: false,
 					error: null,
 					farmId: farm.id,
@@ -118,38 +170,32 @@ export function useDashboard(): DashboardData {
 						typeof recAction === "string"
 							? () => {
 									alertAPI
-										.send(
-											farm.id,
-											`${recAction} recommended for ${farm.name}.`
-										)
+										.send(farm.id, `${recAction} recommended for ${farm.name}.`)
 										.catch(() => {});
 							  }
 							: null,
 				});
 			} catch {
 				if (!cancelled) {
-					setData({
+					setFarmData({
+						...EMPTY_FARM_DATA,
 						loading: false,
 						error: "Could not load dashboard data right now.",
-						farmId: null,
-						hasFarm: false,
-						weather: null,
-						soil: [],
-						recommendation: null,
-						alerts: [],
-						waterUsage: [],
-						tank: null,
-						onSendSMS: null,
+						hasFarm: true,
+						farmId: farm.id,
 					});
 				}
 			}
 		};
-
 		run();
 		return () => {
 			cancelled = true;
 		};
-	}, []);
+	}, [selectedFarmId, farms]);
 
-	return data;
+	return {
+		...farmData,
+		farms,
+		recipientCount,
+	};
 }

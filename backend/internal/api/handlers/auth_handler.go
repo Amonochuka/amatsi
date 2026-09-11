@@ -146,6 +146,37 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "logged_out"})
 }
 
+// DeleteAccount permanently removes the authenticated user's account.
+func (h *AuthHandler) DeleteAccount(c *gin.Context) {
+	userID, ok := middleware.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	accessJTI, _ := c.Get(middleware.ContextJWTIDKey)
+	accessExp, _ := c.Get(middleware.ContextJWTExpiryKey)
+
+	var input struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	_ = c.ShouldBindJSON(&input)
+
+	jti, _ := accessJTI.(string)
+	exp, _ := accessExp.(time.Time)
+
+	if err := h.svc.DeleteAccount(c.Request.Context(), userID, jti, exp, input.RefreshToken); err != nil {
+		if errors.Is(err, services.ErrAccountNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete account"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "account_deleted"})
+}
+
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	userID, ok := middleware.GetUserIDFromContext(c)
 	if !ok {
