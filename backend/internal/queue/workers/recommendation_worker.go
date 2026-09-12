@@ -4,12 +4,12 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/hibiken/asynq"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/amatsi/backend/internal/clients"
 	"github.com/amatsi/backend/internal/config"
 	"github.com/amatsi/backend/internal/repository"
 	"github.com/amatsi/backend/internal/services"
+	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // RecommendationProcessor generates recommendations for all farms. It is
@@ -17,7 +17,7 @@ import (
 // user context — it iterates the full farm list and reuses the same
 // RecommendationService as the HTTP endpoint.
 type RecommendationProcessor struct {
-	service *services.RecommendationService
+	service  *services.RecommendationService
 	farmRepo *repository.FarmRepository
 }
 
@@ -60,7 +60,7 @@ func NewRecommendationProcessorFromConfig(
 		repository.NewWeatherRepository(db),
 		farmRepo,
 		repository.NewUserRepository(db),
-		clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey),
+		clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey, cfg.KijaniBoxMock, cfg.KijaniBoxMockScenario),
 		clients.NewPythonAIClient(cfg.AIServiceURL),
 		mqttClient,
 		services.NewAlertService(

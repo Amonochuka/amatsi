@@ -38,6 +38,11 @@ type AppConfig struct {
 	// KijaniBox API
 	KijaniBoxAPIKey  string
 	KijaniBoxBaseURL string
+	// KijaniBoxMock serves canned forecasts (dry/rainy/normal/saturated)
+	// instead of calling the live API — useful for local dev and demos where
+	// no real token is available. Defaults to false: real live data.
+	KijaniBoxMock         bool
+	KijaniBoxMockScenario string
 
 	// Africa's Talking SMS
 	AfricaTalkingAPIKey      string
@@ -86,6 +91,8 @@ func Load() (*AppConfig, error) {
 		JWTRefreshTokenTTL:        getDurationEnvOrDefault("JWT_REFRESH_TOKEN_TTL", 30*24*time.Hour),
 		JWTSigningMethod:          "HS256",
 		KijaniBoxBaseURL:          getEnvOrDefault("KIJANIBOX_BASE_URL", "https://api.kijanispace.eu"),
+		KijaniBoxMock:             getBoolEnvOrDefault("KIJANIBOX_MOCK", false),
+		KijaniBoxMockScenario:     getEnvOrDefault("KIJANIBOX_MOCK_SCENARIO", "dry"),
 		AfricaTalkingSenderID:     getEnvOrDefault("AFRICA_TALKING_SENDER_ID", "KijaniFarmer"),
 		AfricaTalkingCallbackURL:  os.Getenv("AFRICA_TALKING_CALLBACK_URL"),
 		AfricaTalkingSandbox:      getBoolEnvOrDefault("AFRICA_TALKING_SANDBOX", true),
@@ -119,7 +126,6 @@ func Load() (*AppConfig, error) {
 	requiredFields := map[string]string{
 		"SUPABASE_DB_URL":         cfg.SupabaseDBURL,
 		"JWT_SECRET":              cfg.JWTSecret,
-		"KIJANIBOX_API_KEY":       cfg.KijaniBoxAPIKey,
 		"AFRICA_TALKING_API_KEY":  cfg.AfricaTalkingAPIKey,
 		"AFRICA_TALKING_USERNAME": cfg.AfricaTalkingUsername,
 		"REDIS_URL":               cfg.RedisURL,
@@ -129,6 +135,10 @@ func Load() (*AppConfig, error) {
 		if value == "" {
 			missing = append(missing, name)
 		}
+	}
+	// KijaniBox API key is only required when mock mode is off (real live data).
+	if !cfg.KijaniBoxMock && cfg.KijaniBoxAPIKey == "" {
+		missing = append(missing, "KIJANIBOX_API_KEY")
 	}
 
 	if len(missing) > 0 {

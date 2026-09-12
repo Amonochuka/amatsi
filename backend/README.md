@@ -46,8 +46,10 @@ generation.
 | `JWT_SECRET`              | yes      | Signing key for auth tokens                          |
 | `REDIS_URL`               | yes      | `redis://` or `rediss://` (used for cache + Asynq)   |
 | `AI_SERVICE_URL`          | yes      | Python recommendation service base URL               |
-| `KIJANIBOX_API_KEY`       | yes      | KijaniBox satellite weather/soil API key             |
+| `KIJANIBOX_API_KEY`       | no*      | KijaniBox satellite weather/soil API key             |
 | `KIJANIBOX_BASE_URL`      | yes      | e.g. `https://api.kijanispace.eu`                    |
+| `KIJANIBOX_MOCK`          | no       | `true` = canned forecasts, no token needed; `false` = live API |
+| `KIJANIBOX_MOCK_SCENARIO` | no       | `dry` (default) \| `normal` \| `rainy` \| `saturated` |
 | `AFRICA_TALKING_API_KEY`  | yes      | SMS gateway key                                      |
 | `AFRICA_TALKING_USERNAME` | yes      | `sandbox` locally, real username in production       |
 | `AFRICA_TALKING_SENDER_ID`| yes      | `AMATSI`                                             |

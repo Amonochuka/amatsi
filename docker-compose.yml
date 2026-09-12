@@ -64,6 +64,11 @@ services:
       JWT_SECRET: local-development-secret-change-me
       KIJANIBOX_API_KEY: local-demo-placeholder
       KIJANIBOX_BASE_URL: https://api.kijanispace.eu
+      # Local demo: canned forecast so IRRIGATE fires without a real Kijani token.
+      # To use LIVE data: set KIJANIBOX_MOCK: "false" and put your real token in
+      # KIJANIBOX_API_KEY. Scenario options: dry | normal | rainy | saturated.
+      KIJANIBOX_MOCK: "true"
+      KIJANIBOX_MOCK_SCENARIO: dry
       AFRICA_TALKING_API_KEY: local-demo-placeholder
       AFRICA_TALKING_USERNAME: sandbox
       AFRICA_TALKING_SENDER_ID: AMATSI

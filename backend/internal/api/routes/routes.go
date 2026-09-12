@@ -36,7 +36,7 @@ func RegisterRoutes(
 	weatherRepo := repository.NewWeatherRepository(db)
 
 	// --- Clients ----------------------------------------------------------
-	kijani := clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey)
+	kijani := clients.NewKijaniboxClient(cfg.KijaniBoxBaseURL, cfg.KijaniBoxAPIKey, cfg.KijaniBoxMock, cfg.KijaniBoxMockScenario)
 	ai := clients.NewPythonAIClient(cfg.AIServiceURL)
 
 	// --- Services ---------------------------------------------------------
