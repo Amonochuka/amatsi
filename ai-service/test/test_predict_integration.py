@@ -17,7 +17,7 @@ def test_predict_without_client_keeps_supplied_values():
     with TestClient(app) as client:
         response = client.post(
             "/predict",
-            json={"rainfall_probability": 70, "soil_moisture": 10, "tank_capacity_liters": 100},
+            json={"rainfall_probability": 70, "soil_moisture": 10, "tank_level": 100},
         )
 
     assert response.status_code == 200
@@ -33,7 +33,7 @@ def test_predict_enriches_missing_sensor_data_from_kijanibox():
             "/predict",
             json={
                 "crop_type": "maize",
-                "tank_capacity_liters": 2000,
+                "tank_level": 2000,
                 "latitude": -1.29,
                 "longitude": 36.82,
             },

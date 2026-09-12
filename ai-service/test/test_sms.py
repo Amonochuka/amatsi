@@ -21,7 +21,7 @@ def make_request(**overrides) -> RecommendationRequest:
         "crop_type": "maize",
         "soil_moisture": 25,
         "rainfall_probability": 10,
-        "tank_capacity_liters": 900,
+        "tank_level": 900,
     }
     values.update(overrides)
     return RecommendationRequest(**values)

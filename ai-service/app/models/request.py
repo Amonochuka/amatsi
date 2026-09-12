@@ -15,7 +15,7 @@ class RecommendationRequest(BaseModel):
     temperature: float = Field(default=25.0, ge=-50, le=70)
     rainfall_probability: Percentage = 0.0
     soil_moisture: Percentage = 50.0
-    tank_level: NonNegative = Field(default=1_000.0, alias="tank_capacity_liters")
+    tank_level: NonNegative = Field(default=1_000.0)
     field_size_square_m: Positive = Field(default=1_000.0)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)

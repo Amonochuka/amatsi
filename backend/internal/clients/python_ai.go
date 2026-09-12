@@ -30,7 +30,7 @@ type RecommendationRequest struct {
 	Temperature         float64 `json:"temperature"`
 	RainfallProbability float64 `json:"rainfall_probability"`
 	SoilMoisture        float64 `json:"soil_moisture"`
-	TankCapacityLiters  float64 `json:"tank_capacity_liters"`
+	TankLevel           float64 `json:"tank_level"`
 	FieldSizeSquareM    float64 `json:"field_size_square_m"`
 }
 
@@ -38,6 +38,7 @@ type RecommendationResponse struct {
 	Action             string  `json:"action"` // IRRIGATE, WAIT, MONITOR, CONSERVE
 	Reason             string  `json:"reason"`
 	WaterSavedEstimate float64 `json:"water_saved_estimate"`
+	WaterVolumeLiters  float64 `json:"water_volume_liters"` // liters to apply when IRRIGATE
 }
 
 func (c *PythonAIClient) GetRecommendation(ctx context.Context, reqData *RecommendationRequest) (*RecommendationResponse, error) {
