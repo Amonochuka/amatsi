@@ -51,11 +51,14 @@ export const mapSoil = (soil: SoilResponse, farm: Farm): SoilMoisture => ({
 export const mapTankLevel = (farm: Farm): TankLevel | null => {
 	if (!farm.tank_capacity_liters) return null;
 
-	// No live tank telemetry exists yet — derive a plausible level from the
-	// farm's capacity so the dashboard shows a meaningful tank state.
+	// Real current tank level comes from the backend simulation (drops on
+	// irrigation, refills from rain). Fall back to a plausible 60% if the
+	// farm hasn't been initialized yet.
 	const capacityL = farm.tank_capacity_liters;
-	const fillFactor = 0.35 + ((parseInt(farm.id.replace(/\D/g, ""), 10) || 7) % 55) / 100;
-	const currentL = Math.max(0, Math.min(capacityL, Math.round(capacityL * fillFactor)));
+	const currentL =
+		farm.tank_current_liters != null
+			? farm.tank_current_liters
+			: Math.round(capacityL * 0.6);
 	const inflowRateLPerMin = Math.round((capacityL / 1000) * 4 + (currentL % 17));
 
 	return {

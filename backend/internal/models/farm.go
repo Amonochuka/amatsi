@@ -16,6 +16,7 @@ type Farm struct {
 	SoilType           string    `json:"soil_type" db:"soil_type"`
 	IrrigationMethod   string    `json:"irrigation_method" db:"irrigation_method"`
 	TankCapacityLiters float64   `json:"tank_capacity_liters" db:"tank_capacity_liters"`
+	TankCurrentLiters  *float64  `json:"tank_current_liters" db:"tank_current_liters"`
 	PlantingDate       time.Time `json:"planting_date" db:"planting_date"`
 	CreatedAt          time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`

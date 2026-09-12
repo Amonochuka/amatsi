@@ -193,6 +193,12 @@ INSERT INTO public.farms (
 ON CONFLICT DO NOTHING;
 
 -- ────────────────────────────────────────────────────────────────
+-- 3b. INITIAL TANK LEVELS — farms with tanks start ~60% full
+-- ────────────────────────────────────────────────────────────────
+UPDATE public.farms SET tank_current_liters = tank_capacity_liters * 0.6
+WHERE tank_capacity_liters > 0 AND tank_current_liters IS NULL;
+
+-- ────────────────────────────────────────────────────────────────
 -- 4. WEATHER RECORDS (3 per farm — 2 days ago, yesterday, today)
 -- ────────────────────────────────────────────────────────────────
 -- Clean any previously-seeded rows so re-runs don't accumulate dupes.

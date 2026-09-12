@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/amatsi/backend/internal/models"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"math"
 )
 
 type FarmRepository struct {
@@ -34,12 +35,18 @@ func (r *FarmRepository) CreateFarm(ctx context.Context, farm *models.Farm) erro
 		farm.PlantingDate,
 	).Scan(&farm.ID, &farm.CreatedAt, &farm.UpdatedAt)
 
+	if err == nil && farm.TankCapacityLiters > 0 && farm.TankCurrentLiters == nil {
+		init := farm.TankCapacityLiters * 0.6
+		farm.TankCurrentLiters = &init
+		_, _ = r.db.Exec(ctx, `UPDATE farms SET tank_current_liters = $1 WHERE id = $2`, init, farm.ID)
+	}
+
 	return err
 }
 
 func (r *FarmRepository) GetFarmByID(ctx context.Context, id string) (*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), tank_current_liters, planting_date, created_at, updated_at
 		FROM farms
 		WHERE id = $1
 	`
@@ -56,6 +63,7 @@ func (r *FarmRepository) GetFarmByID(ctx context.Context, id string) (*models.Fa
 		&farm.SoilType,
 		&farm.IrrigationMethod,
 		&farm.TankCapacityLiters,
+		&farm.TankCurrentLiters,
 		&farm.PlantingDate,
 		&farm.CreatedAt,
 		&farm.UpdatedAt,
@@ -68,7 +76,7 @@ func (r *FarmRepository) GetFarmByID(ctx context.Context, id string) (*models.Fa
 
 func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([]*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), tank_current_liters, planting_date, created_at, updated_at
 		FROM farms
 		WHERE user_id = $1
 	`
@@ -93,6 +101,7 @@ func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([
 			&farm.SoilType,
 			&farm.IrrigationMethod,
 			&farm.TankCapacityLiters,
+			&farm.TankCurrentLiters,
 			&farm.PlantingDate,
 			&farm.CreatedAt,
 			&farm.UpdatedAt,
@@ -110,7 +119,7 @@ func (r *FarmRepository) GetFarmsByFarmer(ctx context.Context, userID string) ([
 // whole farm population without a user context.
 func (r *FarmRepository) ListAllFarms(ctx context.Context) ([]*models.Farm, error) {
 	query := `
-		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), planting_date, created_at, updated_at
+		SELECT id, user_id, name, device_id, latitude, longitude, area_hectares, crop_type, soil_type, irrigation_method, COALESCE(tank_capacity_liters, 0), tank_current_liters, planting_date, created_at, updated_at
 		FROM farms
 		ORDER BY created_at ASC
 	`
@@ -135,6 +144,7 @@ func (r *FarmRepository) ListAllFarms(ctx context.Context) ([]*models.Farm, erro
 			&farm.SoilType,
 			&farm.IrrigationMethod,
 			&farm.TankCapacityLiters,
+			&farm.TankCurrentLiters,
 			&farm.PlantingDate,
 			&farm.CreatedAt,
 			&farm.UpdatedAt,
@@ -148,6 +158,13 @@ func (r *FarmRepository) ListAllFarms(ctx context.Context) ([]*models.Farm, erro
 }
 
 func (r *FarmRepository) UpdateFarm(ctx context.Context, farm *models.Farm) error {
+	var oldCapacity *float64
+	var oldCurrent *float64
+	_ = r.db.QueryRow(ctx,
+		`SELECT tank_capacity_liters, tank_current_liters FROM farms WHERE id = $1`,
+		farm.ID,
+	).Scan(&oldCapacity, &oldCurrent)
+
 	query := `
 		UPDATE farms
 		SET name = $1, device_id = NULLIF($2, ''), latitude = $3, longitude = $4, area_hectares = $5, crop_type = $6, soil_type = $7, irrigation_method = $8, tank_capacity_liters = $9, planting_date = $10, updated_at = timezone('utc'::text, now())
@@ -167,11 +184,40 @@ func (r *FarmRepository) UpdateFarm(ctx context.Context, farm *models.Farm) erro
 		farm.PlantingDate,
 		farm.ID,
 	).Scan(&farm.UpdatedAt)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Reconcile the current tank level after a capacity change:
+	//  - tank removed (capacity <= 0)  -> clear the level (rainfed farm)
+	//  - tank just added (was none)    -> start ~60% full
+	//  - capacity resized              -> keep the same fill percentage
+	switch {
+	case farm.TankCapacityLiters <= 0:
+		farm.TankCurrentLiters = nil
+		_, _ = r.db.Exec(ctx, `UPDATE farms SET tank_current_liters = NULL WHERE id = $1`, farm.ID)
+	case oldCapacity == nil || *oldCapacity <= 0:
+		init := farm.TankCapacityLiters * 0.6
+		farm.TankCurrentLiters = &init
+		_, _ = r.db.Exec(ctx, `UPDATE farms SET tank_current_liters = $1 WHERE id = $2`, init, farm.ID)
+	case oldCurrent != nil && oldCapacity != nil && *oldCapacity > 0:
+		scaled := *oldCurrent * (farm.TankCapacityLiters / *oldCapacity)
+		scaled = math.Round(scaled*10) / 10
+		farm.TankCurrentLiters = &scaled
+		_, _ = r.db.Exec(ctx, `UPDATE farms SET tank_current_liters = $1 WHERE id = $2`, scaled, farm.ID)
+	}
+
+	return nil
 }
 
 func (r *FarmRepository) DeleteFarm(ctx context.Context, id string) error {
 	query := `DELETE FROM farms WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id)
+	return err
+}
+
+func (r *FarmRepository) UpdateTankLevel(ctx context.Context, farmID string, currentLiters float64) error {
+	query := `UPDATE farms SET tank_current_liters = $1, updated_at = timezone('utc'::text, now()) WHERE id = $2`
+	_, err := r.db.Exec(ctx, query, currentLiters, farmID)
 	return err
 }

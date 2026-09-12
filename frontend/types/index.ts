@@ -66,6 +66,7 @@ export interface Farm {
 	soil_type: string;
 	irrigation_method: string;
 	tank_capacity_liters: number;
+	tank_current_liters: number | null;
 	planting_date: string;
 	created_at: string;
 	updated_at: string;
